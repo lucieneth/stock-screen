@@ -1,0 +1,51 @@
+name: Refresh screener data
+
+on:
+  schedule:
+    # 21:00 UTC, Mon–Fri (after the US market close; cron is always UTC).
+    - cron: "0 21 * * 1-5"
+  workflow_dispatch: {}   # allow manual "Run workflow"
+
+# Needed so the job can commit the regenerated JSON back to the repo.
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: python -m pipeline.run
+
+      - name: Commit updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/latest.json docs/data/history/
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "data: refresh screener [skip ci]"
+            git push origin HEAD:main
+          fi

@@ -13,6 +13,7 @@ into the output payloads or anywhere under docs/.
 """
 from __future__ import annotations
 
+import os
 import json
 import time
 from datetime import datetime, timezone
@@ -21,6 +22,7 @@ from pathlib import Path
 import yaml
 
 from pipeline.data import finnhub_client as fh
+from pipeline.data import fmp_client as fmp
 from pipeline.checks import fundamentals as fund_check
 from pipeline.checks import technicals as tech_check
 from pipeline.checks import sentiment as sent_check
@@ -38,10 +40,38 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
         return yaml.safe_load(fh_)
 
 
-def score_one(symbol: str, cfg: dict) -> dict:
-    """Fetch + run all checks + score a single ticker into a dashboard record."""
+def _has_error(obj) -> bool:
+    return not isinstance(obj, dict) or "error" in obj or not obj
+
+
+def _candle_count(ohlcv) -> int:
+    return len(ohlcv.get("c", [])) if isinstance(ohlcv, dict) else 0
+
+
+def score_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
+    """Fetch + run all checks + score a single ticker into a dashboard record.
+
+    Finnhub is the primary source; when its free tier gates OHLCV/fundamentals
+    we fall back to FMP so technicals and fundamentals still populate.
+    """
     raw = fh.fetch_ticker(symbol)
     thresholds = cfg.get("thresholds", {})
+    sources = {"primary": "finnhub"}
+
+    slow_w = int(thresholds.get("technicals", {}).get("sma_slow", 200))
+    if use_fmp and _candle_count(raw.get("ohlcv")) < slow_w:
+        try:
+            raw["ohlcv"] = fmp.get_ohlcv(symbol, days=max(slow_w + 50, 400))
+            sources["ohlcv"] = "fmp"
+        except fmp.FMPError:
+            pass  # keep whatever Finnhub returned (possibly an error dict)
+
+    if use_fmp and _has_error(raw.get("financials")):
+        try:
+            raw["financials"] = fmp.get_fundamentals(symbol)
+            sources["fundamentals"] = "fmp"
+        except fmp.FMPError:
+            pass
 
     fundamentals = fund_check.check(raw.get("financials", {}), thresholds.get("fundamentals", {}))
     technicals = tech_check.check(raw.get("ohlcv", {}), thresholds.get("technicals", {}))
@@ -70,16 +100,18 @@ def score_one(symbol: str, cfg: dict) -> dict:
             "technicals": technicals.get("metrics", {}),
             "sentiment": sentiment.get("metrics", {}),
         },
+        "sources": sources,
     }
 
 
 def run(cfg: dict | None = None) -> dict:
     cfg = cfg or load_config()
     watchlist = cfg.get("watchlist", [])
+    use_fmp = bool(os.environ.get("FMP_API_KEY"))
     records: list[dict] = []
     for symbol in watchlist:
         try:
-            records.append(score_one(symbol, cfg))
+            records.append(score_one(symbol, cfg, use_fmp=use_fmp))
         except fh.FinnhubError as exc:
             records.append({"symbol": symbol, "error": str(exc)})
         time.sleep(1.1)  # stay polite vs the 60 calls/min free tier
