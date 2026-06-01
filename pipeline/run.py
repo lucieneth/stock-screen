@@ -104,17 +104,38 @@ def score_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
     }
 
 
-def run(cfg: dict | None = None) -> dict:
+def _is_rate_limited(error_msg: str) -> bool:
+    """True when a ticker failed specifically because of an API rate limit."""
+    msg = (error_msg or "").lower()
+    return "429" in msg or "rate limit" in msg or "limit reached" in msg
+
+
+def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
     cfg = cfg or load_config()
     watchlist = cfg.get("watchlist", [])
     use_fmp = bool(os.environ.get("FMP_API_KEY"))
+
+    def attempt(symbol: str) -> dict:
+        try:
+            return score_one(symbol, cfg, use_fmp=use_fmp)
+        except fh.FinnhubError as exc:
+            return {"symbol": symbol, "error": str(exc)}
+
     records: list[dict] = []
     for symbol in watchlist:
-        try:
-            records.append(score_one(symbol, cfg, use_fmp=use_fmp))
-        except fh.FinnhubError as exc:
-            records.append({"symbol": symbol, "error": str(exc)})
+        records.append(attempt(symbol))
         time.sleep(1.1)  # stay polite vs the 60 calls/min free tier
+
+    # Run-level retry: any ticker that failed *because of* a rate limit gets one
+    # more pass after a cooldown that lets the per-minute quota refill. Other
+    # errors (bad symbol, no data) are left as-is — retrying them won't help.
+    limited = [i for i, r in enumerate(records) if "error" in r and _is_rate_limited(r["error"])]
+    if limited:
+        print(f"{len(limited)} ticker(s) hit a rate limit; cooling down {rate_limit_cooldown:.0f}s then retrying.")
+        time.sleep(rate_limit_cooldown)
+        for i in limited:
+            records[i] = attempt(records[i]["symbol"])
+            time.sleep(1.5)
 
     return {
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),
