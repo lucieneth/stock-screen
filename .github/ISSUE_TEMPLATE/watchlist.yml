@@ -1,0 +1,28 @@
+name: Watchlist change
+description: Add or remove tickers from the screener watchlist
+title: "[watchlist] update"
+labels: ["watchlist"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Add or remove tickers. After you submit, an Action updates
+        `config.yaml` and refreshes the dashboard (only requests from the repo
+        owner/collaborators are applied).
+  - type: dropdown
+    id: action
+    attributes:
+      label: Action
+      options:
+        - Add
+        - Remove
+    validations:
+      required: true
+  - type: input
+    id: tickers
+    attributes:
+      label: Ticker(s)
+      description: One or more US ticker symbols, comma- or space-separated (e.g. NFLX, BRK-B).
+      placeholder: NFLX
+    validations:
+      required: true

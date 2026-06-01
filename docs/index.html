@@ -20,6 +20,13 @@
     <p class="tagline">Decision-support dashboard — verdicts are a filter to investigate, not buy/sell instructions. Not financial advice.</p>
   </header>
 
+  <section class="manage">
+    <input id="manage-ticker" type="text" placeholder="Ticker, e.g. NFLX" aria-label="Ticker to add or remove" />
+    <button id="add-btn" type="button">+ Add</button>
+    <button id="remove-btn" type="button" class="secondary">– Remove</button>
+    <span class="manage-hint">opens a GitHub issue; the Action updates the watchlist</span>
+  </section>
+
   <section class="controls">
     <input id="search" type="search" placeholder="Filter by ticker…" aria-label="Filter by ticker" />
     <label>Verdict

@@ -1,0 +1,82 @@
+name: Watchlist update from issue
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write   # commit config.yaml + refreshed data
+  issues: write     # reply on / close the issue
+
+concurrency:
+  group: watchlist-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    # Only act on watchlist-labelled issues, and only when the author is the
+    # repo owner or a collaborator/member — the repo is public, so this stops
+    # strangers from editing the watchlist or spending Actions minutes.
+    if: >-
+      contains(github.event.issue.labels.*.name, 'watchlist') &&
+      contains(fromJSON('["OWNER","COLLABORATOR","MEMBER"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Apply watchlist change
+        id: apply
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: python -m pipeline.issue_ops watchlist_comment.md
+
+      - name: Refresh data
+        if: steps.apply.outputs.changed == 'true'
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: python -m pipeline.run
+
+      - name: Commit changes
+        if: steps.apply.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config.yaml docs/data/latest.json docs/data/history/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "watchlist: update from #${{ github.event.issue.number }} [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Comment and close issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('watchlist_comment.md', 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+            });

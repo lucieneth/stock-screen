@@ -3,6 +3,9 @@
 // SECURITY: this file is public. No API keys, ever. It only reads the
 // pipeline-generated data/latest.json.
 
+// Repo that backs the watchlist issue form. Change if you fork.
+const REPO = "OkPeach/stock-screen";
+
 const VERDICT_CLASS = {
   "WATCH-BUY": "buy",
   "NEUTRAL": "neutral",
@@ -10,6 +13,21 @@ const VERDICT_CLASS = {
 };
 
 let allTickers = [];
+
+function manage(action) {
+  const t = document.getElementById("manage-ticker").value.trim().toUpperCase();
+  if (!t) {
+    document.getElementById("manage-ticker").focus();
+    return;
+  }
+  const params = new URLSearchParams({
+    template: "watchlist.yml",
+    title: `[watchlist] ${action} ${t}`,
+    action: action === "add" ? "Add" : "Remove",
+    tickers: t,
+  });
+  window.open(`https://github.com/${REPO}/issues/new?${params}`, "_blank", "noopener");
+}
 
 async function load() {
   const status = document.getElementById("status");
@@ -129,4 +147,6 @@ function esc(s) {
 for (const id of ["search", "verdict-filter", "sort"]) {
   document.getElementById(id).addEventListener("input", apply);
 }
+document.getElementById("add-btn").addEventListener("click", () => manage("add"));
+document.getElementById("remove-btn").addEventListener("click", () => manage("remove"));
 load();

@@ -40,6 +40,35 @@ h1 { margin: 0.25rem 0; font-size: 1.5rem; }
   align-items: center;
   flex-wrap: wrap;
 }
+.manage {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.manage input {
+  background: var(--panel-2);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+.manage button {
+  background: var(--buy);
+  color: #07210f;
+  border: none;
+  border-radius: 6px;
+  padding: 0.42rem 0.8rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.manage button.secondary { background: var(--panel-2); color: var(--fg); border: 1px solid var(--border); }
+.manage button:hover { filter: brightness(1.08); }
+.manage-hint { color: var(--muted); font-size: 0.78rem; }
+
 .controls input, .controls select {
   background: var(--panel-2);
   color: var(--fg);
