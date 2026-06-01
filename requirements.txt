@@ -1,0 +1,5 @@
+# Pipeline runtime (runs in GitHub Actions only). Python 3.11+.
+requests>=2.31
+pandas>=2.1
+pandas-ta>=0.3.14b0
+pyyaml>=6.0

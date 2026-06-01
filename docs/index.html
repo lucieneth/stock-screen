@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Screener</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!--
+    This page is served publicly by GitHub Pages.
+    NEVER put API keys or secrets in this folder. The pipeline writes
+    data/latest.json; this page only reads and renders it (Phase 3).
+  -->
+  <header>
+    <h1>Personal Stock Screener</h1>
+    <p class="tagline">Decision-support dashboard. Not financial advice.</p>
+  </header>
+
+  <main>
+    <section id="dashboard">
+      <p class="placeholder">
+        Skeleton placeholder (Phase 0). The dashboard will render here once the
+        pipeline produces <code>data/latest.json</code>.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Refreshed on a schedule by GitHub Actions.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

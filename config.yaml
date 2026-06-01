@@ -1,0 +1,49 @@
+# config.yaml — you edit this. No API keys here (keys live in GitHub Actions secrets).
+#
+# Watchlist of US tickers to screen, plus the thresholds and weights used by
+# the scoring pipeline. See plan.md §7 for how these feed into the verdict.
+
+watchlist:
+  - AAPL
+  - MSFT
+  - GOOGL
+  - AMZN
+  - NVDA
+  - META
+  - TSLA
+  - JPM
+  - V
+  - JNJ
+
+# Composite = w_fund*fund + w_tech*tech + w_sent*sent  (each check returns -1..+1)
+weights:
+  fundamentals: 0.40
+  technicals: 0.35
+  sentiment: 0.25
+
+# Verdict bands applied to the composite score (-1..+1).
+verdict_bands:
+  watch_buy: 0.25      # composite >= this  -> WATCH-BUY
+  watch_sell: -0.25    # composite <= this  -> WATCH-SELL
+  # otherwise -> NEUTRAL
+
+thresholds:
+  fundamentals:
+    pe_good: 25         # P/E below this is favorable
+    pe_flag: 40         # P/E above this is a flag
+    rev_growth_yoy: 0.05  # revenue growth YoY above this is favorable
+    debt_to_equity_max: 1.5
+    require_positive_fcf: true
+  technicals:
+    rsi_oversold: 30
+    rsi_overbought: 70
+    sma_fast: 50
+    sma_slow: 200
+  sentiment:
+    lookback_days: 7
+    negative_spike: -0.5  # flag news-sentiment below this
+
+alerts:
+  daily_move_pct: 5.0   # flag a daily move larger than X%
+  flag_52wk_high: true
+  flag_52wk_low: true
