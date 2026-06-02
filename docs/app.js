@@ -13,6 +13,8 @@ const VERDICT_CLASS = {
 };
 
 let allTickers = [];
+// key "SYMBOL:metric" -> { points:[[period,val]], benchmark, label, unit }
+const chartData = {};
 
 function manage(action) {
   const t = document.getElementById("manage-ticker").value.trim().toUpperCase();
@@ -116,14 +118,25 @@ function render(rows) {
 
     const sector = t.sector && t.sector !== "Unknown" ? esc(t.sector) : "";
     const peerNote = (t.peers_in_sector || 0) > 0
-      ? `vs ${t.peers_in_sector} sector peer${t.peers_in_sector > 1 ? "s" : ""}`
-      : "no sector peer in watchlist";
+      ? `vs ${t.peers_in_sector} industry peers`
+      : "no peer data";
+    const history = t.history || {};
     const funRows = (t.fundamentals || []).map((m) => {
       const tone = m.tone || "neutral";
+      const benchTitle = m.sector_benchmark != null
+        ? `${m.benchmark_source === "sector" ? "sector" : "peer"} benchmark ${m.sector_benchmark}`
+        : "";
       const word = m.word
-        ? `<span class="word ${tone}" title="${m.sector_benchmark != null ? "sector median " + m.sector_benchmark : ""}">${esc(m.word)}</span>`
+        ? `<span class="word ${tone}" title="${benchTitle}">${esc(m.word)}</span>`
         : `<span class="word none">—</span>`;
-      return `<tr><td>${esc(m.label)}</td><td class="mval">${esc(m.display)}</td><td>${word}</td></tr>`;
+      const pts = history[m.key];
+      let labelCell = esc(m.label);
+      if (pts && pts.length > 1) {
+        const ck = `${t.symbol}:${m.key}`;
+        chartData[ck] = { points: pts, benchmark: m.sector_benchmark, label: m.label, unit: m.display };
+        labelCell = `<button class="chart-btn" data-ck="${ck}" title="Show history" aria-label="Show ${esc(m.label)} history">📈</button> ${esc(m.label)}`;
+      }
+      return `<tr><td>${labelCell}</td><td class="mval">${esc(m.display)}</td><td>${word}</td></tr>`;
     }).join("");
     const funBlock = (t.fundamentals || []).length
       ? `<details>
@@ -163,6 +176,56 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+// Build a small SVG line chart of a metric's quarterly history.
+function chartSvg(data) {
+  const W = 300, H = 130, padL = 8, padR = 8, padT = 18, padB = 22;
+  const vals = data.points.map((p) => p[1]);
+  const ys = data.benchmark != null ? vals.concat([data.benchmark]) : vals;
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const n = data.points.length;
+  const x = (i) => padL + (i * (W - padL - padR)) / (n - 1);
+  const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+  const line = data.points.map((p, i) => `${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
+  const first = data.points[0][0], last = data.points[n - 1][0];
+  const bench = data.benchmark != null
+    ? `<line x1="${padL}" y1="${y(data.benchmark).toFixed(1)}" x2="${W - padR}" y2="${y(data.benchmark).toFixed(1)}"
+         stroke="#f1c40f" stroke-dasharray="4 3" stroke-width="1"/>
+       <text x="${W - padR}" y="${(y(data.benchmark) - 3).toFixed(1)}" class="c-bench" text-anchor="end">benchmark ${esc(data.benchmark)}</text>`
+    : "";
+  const lastPt = `<circle cx="${x(n - 1).toFixed(1)}" cy="${y(data.points[n - 1][1]).toFixed(1)}" r="2.5" fill="#4f8cff"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="${esc(data.label)} history">
+    <text x="${padL}" y="12" class="c-title">${esc(data.label)} · last ${n} quarters</text>
+    <text x="${padL}" y="${padT - 4}" class="c-axis">${hi.toFixed(1)}</text>
+    <text x="${padL}" y="${H - padB + 12}" class="c-axis">${lo.toFixed(1)}</text>
+    ${bench}
+    <polyline points="${line}" fill="none" stroke="#4f8cff" stroke-width="1.5"/>
+    ${lastPt}
+    <text x="${padL}" y="${H - 4}" class="c-axis">${esc(first)}</text>
+    <text x="${W - padR}" y="${H - 4}" class="c-axis" text-anchor="end">${esc(last)}</text>
+  </svg>`;
+}
+
+// Expand/collapse a chart row beneath the clicked metric.
+document.getElementById("cards").addEventListener("click", (e) => {
+  const btn = e.target.closest(".chart-btn");
+  if (!btn) return;
+  const row = btn.closest("tr");
+  const next = row.nextElementSibling;
+  if (next && next.classList.contains("chart-row")) {
+    next.remove();
+    btn.classList.remove("open");
+    return;
+  }
+  const data = chartData[btn.dataset.ck];
+  if (!data) return;
+  const tr = document.createElement("tr");
+  tr.className = "chart-row";
+  tr.innerHTML = `<td colspan="3">${chartSvg(data)}</td>`;
+  row.after(tr);
+  btn.classList.add("open");
+});
 
 for (const id of ["search", "verdict-filter", "sort"]) {
   document.getElementById(id).addEventListener("input", apply);

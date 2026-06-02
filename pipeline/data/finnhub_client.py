@@ -131,17 +131,32 @@ def get_company_news(
     return data
 
 
-def get_basic_financials(symbol: str, session: requests.Session | None = None) -> dict:
-    """Company basic financials (/stock/metric?metric=all).
+def get_company_metrics(symbol: str, session: requests.Session | None = None) -> dict:
+    """Full /stock/metric payload -> {"metric": {...}, "series": {...}}.
 
-    Returns the `metric` sub-object (P/E, margins, growth, D/E, 52wk hi/lo, ...).
-    Field availability varies by plan; callers must look up keys defensively.
+    `metric` holds the current values; `series` holds historical quarterly/annual
+    time-series (used for the fundamentals charts). Both are free-tier.
     """
     session = session or requests.Session()
     data = _get(session, "/stock/metric", {"symbol": symbol, "metric": "all"})
     if not isinstance(data, dict):
         raise FinnhubError(f"Unexpected metric payload for {symbol!r}: {data!r}")
-    return data.get("metric", {}) if isinstance(data.get("metric"), dict) else {}
+    return {
+        "metric": data.get("metric") if isinstance(data.get("metric"), dict) else {},
+        "series": data.get("series") if isinstance(data.get("series"), dict) else {},
+    }
+
+
+def get_basic_financials(symbol: str, session: requests.Session | None = None) -> dict:
+    """Company basic financials (the `metric` sub-object of /stock/metric)."""
+    return get_company_metrics(symbol, session=session)["metric"]
+
+
+def get_peers(symbol: str, session: requests.Session | None = None) -> list[str]:
+    """Industry peer tickers (/stock/peers) — the real peer group, free tier."""
+    session = session or requests.Session()
+    data = _get(session, "/stock/peers", {"symbol": symbol})
+    return [s for s in data if isinstance(s, str)] if isinstance(data, list) else []
 
 
 def get_profile(symbol: str, session: requests.Session | None = None) -> dict:
@@ -189,9 +204,12 @@ def fetch_ticker(symbol: str, news_days: int = 7, ohlcv_days: int = 400) -> dict
         result["ohlcv"] = {"error": str(exc)}
 
     try:
-        result["financials"] = get_basic_financials(symbol, session=session)
+        bundle = get_company_metrics(symbol, session=session)
+        result["financials"] = bundle["metric"]
+        result["series"] = bundle["series"]
     except FinnhubError as exc:
         result["financials"] = {"error": str(exc)}
+        result["series"] = {}
 
     try:
         result["sentiment"] = get_news_sentiment(symbol, session=session)

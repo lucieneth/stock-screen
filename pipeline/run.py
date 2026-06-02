@@ -29,6 +29,7 @@ from pipeline.checks import sentiment as sent_check
 from pipeline.checks import alerts as alert_check
 from pipeline import scoring
 from pipeline import metrics
+from pipeline import peers
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "config.yaml"
@@ -57,15 +58,15 @@ def score_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
     """
     raw = fh.fetch_ticker(symbol)
     thresholds = cfg.get("thresholds", {})
-    sources = {"primary": "finnhub"}
+    sources = {"primary": "finnhub", "fmp_enabled": use_fmp}
 
     slow_w = int(thresholds.get("technicals", {}).get("sma_slow", 200))
     if use_fmp and _candle_count(raw.get("ohlcv")) < slow_w:
         try:
             raw["ohlcv"] = fmp.get_ohlcv(symbol, days=max(slow_w + 50, 400))
             sources["ohlcv"] = "fmp"
-        except fmp.FMPError:
-            pass  # keep whatever Finnhub returned (possibly an error dict)
+        except fmp.FMPError as exc:
+            sources["ohlcv_error"] = str(exc)  # keep Finnhub's result, record why FMP failed
 
     # Keep the two providers' fundamentals separate so metrics.extract can
     # normalize by source (Finnhub=percent, FMP=fraction). A merged dict would
@@ -75,12 +76,14 @@ def score_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
     if use_fmp:
         try:
             fin_fmp = fmp.get_fundamentals(symbol)
-        except fmp.FMPError:
-            pass
+        except fmp.FMPError as exc:
+            sources["fundamentals_error"] = str(exc)
     if fin_finnhub and fin_fmp:
         sources["fundamentals"] = "finnhub+fmp"
     elif fin_fmp:
         sources["fundamentals"] = "fmp"
+    elif fin_finnhub:
+        sources["fundamentals"] = "finnhub"
 
     # Company sector for peer-relative labelling.
     profile = {}
@@ -129,6 +132,8 @@ def score_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
         # Raw normalized metric values; metrics.annotate_records turns these into
         # the sector-relative `fundamentals` list and then removes this key.
         "_metric_values": metrics.extract(fin_finnhub, fin_fmp),
+        # Historical quarterly series for the fundamentals charts.
+        "history": metrics.history_from_series(raw.get("series")),
         "sources": sources,
     }
 
@@ -166,8 +171,30 @@ def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
             records[i] = attempt(records[i]["symbol"])
             time.sleep(1.5)
 
-    # Label each fundamental metric relative to its sector peers in the watchlist.
-    metrics.annotate_records(records)
+    # Benchmark fundamentals against each company's real industry peers (cached),
+    # then layer the whole-sector P/E from FMP on top of the peer P/E where we
+    # can get it. Falls back to peer P/E if FMP is unavailable.
+    ok_symbols = [r["symbol"] for r in records if "error" not in r]
+    benchmarks = peers.build_benchmarks(ok_symbols)
+    if use_fmp:
+        sector_pe: dict[str, float | None] = {}
+        for r in records:
+            if "error" in r:
+                continue
+            sec = r.get("sector")
+            if not sec or sec == "Unknown":
+                continue
+            if sec not in sector_pe:
+                try:
+                    sector_pe[sec] = fmp.get_sector_pe(sec)
+                except fmp.FMPError:
+                    sector_pe[sec] = None
+            pe = sector_pe[sec]
+            if pe and r["symbol"] in benchmarks:
+                benchmarks[r["symbol"]]["values"]["pe"] = round(pe, 4)
+                benchmarks[r["symbol"]]["source"]["pe"] = "sector"
+
+    metrics.annotate_records(records, benchmarks)
 
     return {
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),

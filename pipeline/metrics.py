@@ -40,6 +40,36 @@ METRICS: list[Metric] = [
 
 BY_KEY = {m.key: m for m in METRICS}
 
+# metric key -> Finnhub /stock/metric `series.quarterly` field (for charts).
+SERIES_KEYS = {
+    "pe": "pe", "pb": "pb", "ps": "ps",
+    "gross_margin": "grossMargin", "net_margin": "netMargin",
+    "roe": "roe", "roa": "roa",
+    "current_ratio": "currentRatio", "debt_to_equity": "totalDebtToEquity",
+}
+
+
+def history_from_series(series: dict | None, max_points: int = 16) -> dict[str, list]:
+    """Build {metric_key: [[period, value], ...]} from a Finnhub series block."""
+    if not isinstance(series, dict):
+        return {}
+    quarterly = series.get("quarterly") if isinstance(series.get("quarterly"), dict) else {}
+    out: dict[str, list] = {}
+    for key, field in SERIES_KEYS.items():
+        pts = quarterly.get(field)
+        if not isinstance(pts, list) or not pts:
+            continue
+        series_pts = []
+        for p in pts[-max_points:]:
+            if isinstance(p, dict) and p.get("v") is not None and p.get("period"):
+                try:
+                    series_pts.append([p["period"], round(float(p["v"]), 3)])
+                except (TypeError, ValueError):
+                    continue
+        if series_pts:
+            out[key] = series_pts
+    return out
+
 
 def _raw(d: dict, keys: list[str]):
     for k in keys:
@@ -124,43 +154,36 @@ def _median(xs: list[float]) -> float:
     return s[mid] if n % 2 else (s[mid - 1] + s[mid]) / 2
 
 
-def annotate_records(records: list[dict]) -> None:
+def annotate_records(records: list[dict], benchmarks: dict[str, dict] | None = None) -> None:
     """Attach a sector-relative `fundamentals` list to each record in place.
 
-    Benchmark = median of the company's sector peers in the watchlist. With one
-    peer that's "compare against another company in the same sector"; with none,
-    values are shown without a label.
+    benchmarks: {symbol: {"values": {key: float}, "source": {key: str}, "peers": int}}
+    where the benchmark per metric is the median of the company's real industry
+    peers (and, for P/E, optionally the whole-sector value). Metrics without a
+    benchmark are shown without a label.
     """
-    groups: dict[str, dict[str, list[tuple[str, float]]]] = {}
+    benchmarks = benchmarks or {}
     for r in records:
         if "error" in r:
             continue
-        sec = r.get("sector") or "Unknown"
-        bucket = groups.setdefault(sec, {})
-        for k, v in r.get("_metric_values", {}).items():
-            bucket.setdefault(k, []).append((r["symbol"], v))
-
-    for r in records:
-        if "error" in r:
-            continue
-        sec = r.get("sector") or "Unknown"
-        bucket = groups.get(sec, {})
+        bench = benchmarks.get(r["symbol"], {})
+        bvals = bench.get("values", {})
+        bsrc = bench.get("source", {})
         vals = r.get("_metric_values", {})
-        out, peer_syms = [], set()
+        out = []
         for m in METRICS:
             if m.key not in vals:
                 continue
             value = vals[m.key]
-            peers = [v for (s, v) in bucket.get(m.key, []) if s != r["symbol"]]
-            peer_syms.update(s for (s, _v) in bucket.get(m.key, []) if s != r["symbol"])
-            benchmark = _median(peers) if peers else None
+            benchmark = bvals.get(m.key)
             word = label(m, value, benchmark) if benchmark is not None else None
             out.append({
                 "key": m.key, "label": m.label,
                 "value": round(value, 4), "display": fmt(m, value),
                 "sector_benchmark": round(benchmark, 4) if benchmark is not None else None,
+                "benchmark_source": bsrc.get(m.key, "peers") if benchmark is not None else None,
                 "word": word, "tone": _TONE.get(word) if word else None,
             })
         r["fundamentals"] = out
-        r["peers_in_sector"] = len(peer_syms)
+        r["peers_in_sector"] = bench.get("peers", 0)
         r.pop("_metric_values", None)

@@ -1,14 +1,16 @@
-"""FMP client — OHLCV + fundamentals fallback for Finnhub's free-tier gaps. (Phase 4)
+"""FMP client — OHLCV + fundamentals + profile fallback for Finnhub gaps.
 
-Finnhub free keys gate /stock/candle (OHLCV) and /news-sentiment, so on a free
-plan technicals/fundamentals can come up empty. This client pulls the same data
-from Financial Modeling Prep and returns it in shapes the existing checks
-already understand:
+Finnhub free keys gate /stock/candle (OHLCV), so technicals come up empty
+without a backup. This client pulls the same data from Financial Modeling Prep.
 
+FMP migrated to a "stable" API; legacy /api/v3 paths are often refused on newer
+free keys. So every call tries the stable endpoint first and falls back to
+legacy, and errors carry the exact reason (status + FMP message) for diagnosis.
+
+Returns shapes the existing checks already understand:
   - get_ohlcv()       -> {"c":[...closes oldest->newest...], "t":[...], "s":"ok"}
-                         (same shape as finnhub_client.get_ohlcv)
-  - get_fundamentals() -> a metric dict keyed with the SAME names
-                         checks/fundamentals.py looks up (peTTM, ...)
+  - get_fundamentals() -> raw FMP ratios/key-metrics dict (metrics.extract knows the keys)
+  - get_profile()     -> {"sector","industry","companyName"}
 
 Reads FMP_API_KEY from the environment (GitHub Actions secret). Never hard-code.
 
@@ -20,10 +22,12 @@ import os
 import sys
 import json
 import time
+from datetime import datetime, timezone
 
 import requests
 
-BASE_URL = "https://financialmodelingprep.com/api/v3"
+BASE_STABLE = "https://financialmodelingprep.com/stable"
+BASE_LEGACY = "https://financialmodelingprep.com/api/v3"
 DEFAULT_TIMEOUT = 15
 
 
@@ -34,16 +38,12 @@ class FMPError(RuntimeError):
 def _api_key() -> str:
     key = os.environ.get("FMP_API_KEY")
     if not key:
-        raise FMPError(
-            "FMP_API_KEY is not set. Export it (or supply it via GitHub Actions "
-            "secrets) before using the FMP fallback."
-        )
+        raise FMPError("FMP_API_KEY is not set (no env var / Actions secret reaching the job).")
     return key
 
 
-def _get(session: requests.Session, path: str, params: dict, *, retries: int = 3):
+def _request(session: requests.Session, url: str, params: dict, *, retries: int = 3):
     params = {**params, "apikey": _api_key()}
-    url = f"{BASE_URL}{path}"
     backoff = 1.0
     last_exc: Exception | None = None
     for _ in range(retries):
@@ -55,19 +55,30 @@ def _get(session: requests.Session, path: str, params: dict, *, retries: int = 3
             backoff *= 2
             continue
         if resp.status_code == 429 or resp.status_code >= 500:
-            last_exc = FMPError(f"{path} -> HTTP {resp.status_code}")
+            last_exc = FMPError(f"HTTP {resp.status_code}")
             time.sleep(backoff)
             backoff *= 2
             continue
-        if resp.status_code in (401, 403):
-            raise FMPError(f"{path} -> HTTP {resp.status_code} (key/plan issue).")
         if not resp.ok:
-            raise FMPError(f"{path} -> HTTP {resp.status_code}: {resp.text[:200]}")
+            raise FMPError(f"HTTP {resp.status_code}: {resp.text[:160]}")
         data = resp.json()
-        if isinstance(data, dict) and data.get("Error Message"):
-            raise FMPError(f"{path}: {data['Error Message']}")
+        if isinstance(data, dict) and (data.get("Error Message") or data.get("message")):
+            raise FMPError(str(data.get("Error Message") or data.get("message"))[:160])
         return data
-    raise FMPError(f"{path} failed after {retries} attempts: {last_exc}")
+    raise FMPError(f"failed after {retries} attempts: {last_exc}")
+
+
+def _get(session, stable_path: str, legacy_path: str, params: dict | None = None,
+         legacy_params: dict | None = None):
+    """Try the stable endpoint, then fall back to legacy; report both errors."""
+    session = session or requests.Session()
+    try:
+        return _request(session, f"{BASE_STABLE}{stable_path}", params or {})
+    except FMPError as stable_exc:
+        try:
+            return _request(session, f"{BASE_LEGACY}{legacy_path}", legacy_params or params or {})
+        except FMPError as legacy_exc:
+            raise FMPError(f"stable[{stable_path}]: {stable_exc} | legacy[{legacy_path}]: {legacy_exc}")
 
 
 def _to_float(v):
@@ -77,15 +88,25 @@ def _to_float(v):
         return None
 
 
+def _first_row(data) -> dict:
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0]
+    return data if isinstance(data, dict) else {}
+
+
 def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = None) -> dict:
     """Daily candles as a Finnhub-shaped dict (closes oldest -> newest)."""
     session = session or requests.Session()
-    # `timeseries` caps the number of trading days returned.
-    data = _get(session, f"/historical-price-full/{symbol}", {"timeseries": days})
-    hist = data.get("historical") if isinstance(data, dict) else None
-    if not hist:
-        raise FMPError(f"No historical prices for {symbol!r} from FMP.")
-    rows = list(reversed(hist))  # FMP returns most-recent first
+    data = _get(
+        session,
+        "/historical-price-eod/full", f"/historical-price-full/{symbol}",
+        params={"symbol": symbol},
+    )
+    # stable -> list of rows; legacy -> {"historical": [...]}
+    rows = data.get("historical") if isinstance(data, dict) else data
+    if not rows:
+        raise FMPError(f"no historical prices for {symbol!r}")
+    rows = sorted(rows, key=lambda r: r.get("date", ""))[-days:]  # oldest -> newest
     return {
         "s": "ok",
         "t": [r.get("date") for r in rows],
@@ -98,22 +119,17 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
 
 
 def get_fundamentals(symbol: str, session: requests.Session | None = None) -> dict:
-    """Merged TTM ratios + key-metrics + revenue growth (raw FMP keys).
-
-    pipeline.metrics.extract() knows the FMP key names, so we return the raw
-    dicts rather than renaming. freeCashFlowTTM is mapped from per-share FCF only
-    if an absolute value isn't present.
-    """
+    """Merged TTM ratios + key-metrics + revenue growth (raw FMP keys)."""
     session = session or requests.Session()
     metric: dict = {}
 
-    for path in (f"/ratios-ttm/{symbol}", f"/key-metrics-ttm/{symbol}"):
+    for stable, legacy in (("/ratios-ttm", f"/ratios-ttm/{symbol}"),
+                           ("/key-metrics-ttm", f"/key-metrics-ttm/{symbol}")):
         try:
-            rows = _get(session, path, {})
-            if isinstance(rows, list) and rows and isinstance(rows[0], dict):
-                for k, v in rows[0].items():
-                    if v is not None and k not in metric:
-                        metric[k] = v
+            row = _first_row(_get(session, stable, legacy, params={"symbol": symbol}))
+            for k, v in row.items():
+                if v is not None and k not in metric:
+                    metric[k] = v
         except FMPError:
             pass
 
@@ -121,22 +137,23 @@ def get_fundamentals(symbol: str, session: requests.Session | None = None) -> di
         metric["freeCashFlowTTM"] = metric["freeCashFlowPerShareTTM"]
 
     try:
-        growth = _get(session, f"/financial-growth/{symbol}", {"period": "annual", "limit": 1})
-        if isinstance(growth, list) and growth and growth[0].get("revenueGrowth") is not None:
-            metric["revenueGrowth"] = growth[0]["revenueGrowth"]
+        row = _first_row(_get(session, "/financial-growth", f"/financial-growth/{symbol}",
+                              params={"symbol": symbol, "period": "annual", "limit": 1},
+                              legacy_params={"period": "annual", "limit": 1}))
+        if row.get("revenueGrowth") is not None:
+            metric["revenueGrowth"] = row["revenueGrowth"]
     except FMPError:
         pass
 
     if not metric:
-        raise FMPError(f"No usable fundamentals for {symbol!r} from FMP.")
+        raise FMPError(f"no usable fundamentals for {symbol!r}")
     return metric
 
 
 def get_profile(symbol: str, session: requests.Session | None = None) -> dict:
     """Company profile -> {sector, industry, companyName}."""
     session = session or requests.Session()
-    data = _get(session, f"/profile/{symbol}", {})
-    row = data[0] if isinstance(data, list) and data else (data if isinstance(data, dict) else {})
+    row = _first_row(_get(session, "/profile", f"/profile/{symbol}", params={"symbol": symbol}))
     return {
         "sector": row.get("sector"),
         "industry": row.get("industry"),
@@ -144,17 +161,32 @@ def get_profile(symbol: str, session: requests.Session | None = None) -> dict:
     }
 
 
+def get_sector_pe(sector: str, date: str | None = None, session: requests.Session | None = None) -> float:
+    """Whole-sector P/E for `sector` (FMP sector-PE snapshot). May be premium."""
+    session = session or requests.Session()
+    date = date or datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+    data = _get(session, "/sector-pe-snapshot", "/sector_price_earning_ratio",
+                params={"date": date, "sector": sector},
+                legacy_params={"date": date, "exchange": "NYSE"})
+    rows = data if isinstance(data, list) else [data]
+    for row in rows:
+        if isinstance(row, dict) and str(row.get("sector", "")).lower() == sector.lower():
+            pe = _to_float(row.get("pe") or row.get("priceEarningRatio"))
+            if pe:
+                return pe
+    raise FMPError(f"no sector P/E for {sector!r}")
+
+
 def main(argv: list[str]) -> int:
     symbol = (argv[1] if len(argv) > 1 else "AAPL").upper()
-    try:
-        out = {
-            "symbol": symbol,
-            "ohlcv_candles": len(get_ohlcv(symbol)["c"]),
-            "fundamentals": get_fundamentals(symbol),
-        }
-    except FMPError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
+    out: dict = {"symbol": symbol}
+    for name, fn in (("ohlcv", lambda: {"candles": len(get_ohlcv(symbol)["c"])}),
+                     ("fundamentals", lambda: get_fundamentals(symbol)),
+                     ("profile", lambda: get_profile(symbol))):
+        try:
+            out[name] = fn()
+        except FMPError as exc:
+            out[name] = {"error": str(exc)}
     print(json.dumps(out, indent=2))
     return 0
 
