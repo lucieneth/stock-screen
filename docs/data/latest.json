@@ -1,40 +1,36 @@
 {
-  "generated_at": "2026-06-02T05:47:33.844893+00:00",
-  "count": 2,
+  "generated_at": "2026-06-01T23:01:15.667099+00:00",
+  "count": 10,
   "tickers": [
     {
       "symbol": "AAPL",
       "company": "Apple",
       "sector": "Technology",
-      "price": 312.1,
-      "change_pct": -0.1,
+      "price": 306.31,
+      "change_pct": -1.8426,
       "verdict": "WATCH-BUY",
-      "composite": 0.565,
+      "composite": 0.442,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.67
+        "sentiment": 0.348
       },
       "reasons": [
-        "[fundamentals] P/E 37.4 (fair)",
+        "[fundamentals] P/E 36.9 (fair)",
         "[fundamentals] Revenue growth 12.8% YoY > 5%",
         "[fundamentals] Debt/Equity 0.80 < 1.5",
-        "[technicals] technicals: unavailable (403)",
-        "[sentiment] Headline sentiment +0.67 over 1 stories (1+ / 0-, VADER)"
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.35 over 50 stories (32+ / 8-, VADER)"
       ],
-      "flags": [
-        "near_52wk_high"
-      ],
-      "alerts": [
-        "Near 52-wk high (312.1 vs 315)"
-      ],
+      "flags": [],
+      "alerts": [],
       "details": {
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 1,
-          "avg": 0.67
+          "stories": 50,
+          "avg": 0.348
         }
       },
       "history": {
@@ -500,10 +496,9 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 37.4,
-          "display": "37.4\u00d7",
-          "sector_benchmark": 28.5,
-          "benchmark_source": "sector",
+          "value": 36.8613,
+          "display": "36.9\u00d7",
+          "sector_benchmark": 27.4787,
           "word": "expensive",
           "tone": "bad"
         },
@@ -520,12 +515,11 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 10.2,
-          "display": "10.2\u00d7",
-          "sector_benchmark": 1.0,
-          "benchmark_source": "peers",
-          "word": "expensive",
-          "tone": "bad"
+          "value": 10.0085,
+          "display": "10.0\u00d7",
+          "sector_benchmark": 10.8108,
+          "word": "in line",
+          "tone": "neutral"
         },
         {
           "key": "gross_margin",
@@ -614,35 +608,31 @@
       "symbol": "MSFT",
       "company": "Microsoft",
       "sector": "Technology",
-      "price": 450.2,
-      "change_pct": 5.4,
+      "price": 460.52,
+      "change_pct": 2.2832,
       "verdict": "WATCH-BUY",
-      "composite": 0.565,
+      "composite": 0.462,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.67
+        "sentiment": 0.402
       },
       "reasons": [
-        "[fundamentals] P/E 26.7 (fair)",
+        "[fundamentals] P/E 27.5 (fair)",
         "[fundamentals] Revenue growth 17.9% YoY > 5%",
         "[fundamentals] Debt/Equity 0.25 < 1.5",
-        "[technicals] technicals: unavailable (403)",
-        "[sentiment] Headline sentiment +0.67 over 1 stories (1+ / 0-, VADER)"
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.40 over 50 stories (39+ / 7-, VADER)"
       ],
-      "flags": [
-        "big_daily_move"
-      ],
-      "alerts": [
-        "Daily move +5.4% (>= 5%)"
-      ],
+      "flags": [],
+      "alerts": [],
       "details": {
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 1,
-          "avg": 0.67
+          "stories": 50,
+          "avg": 0.402
         }
       },
       "history": {
@@ -1108,12 +1098,11 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 26.7,
-          "display": "26.7\u00d7",
-          "sector_benchmark": 28.5,
-          "benchmark_source": "sector",
-          "word": "in line",
-          "tone": "neutral"
+          "value": 27.4787,
+          "display": "27.5\u00d7",
+          "sector_benchmark": 36.8613,
+          "word": "cheap",
+          "tone": "good"
         },
         {
           "key": "pb",
@@ -1128,12 +1117,11 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 10.5,
-          "display": "10.5\u00d7",
-          "sector_benchmark": 7.5,
-          "benchmark_source": "peers",
-          "word": "expensive",
-          "tone": "bad"
+          "value": 10.8108,
+          "display": "10.8\u00d7",
+          "sector_benchmark": 10.0085,
+          "word": "in line",
+          "tone": "neutral"
         },
         {
           "key": "gross_margin",
@@ -1160,8 +1148,144 @@
           "label": "ROE",
           "value": 33.1,
           "display": "33.1%",
-          "sector_benchmark": 24.0,
-          "benchmark_source": "peers",
+          "sector_benchmark": 146.69,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 19.15,
+          "display": "19.1%",
+          "sector_benchmark": 34.02,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 1.2829,
+          "display": "1.3\u00d7",
+          "sector_benchmark": 1.0704,
+          "word": "strong",
+          "tone": "good"
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 0.249,
+          "display": "0.2\u00d7",
+          "sector_benchmark": 0.7955,
+          "word": "lean",
+          "tone": "good"
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 17.87,
+          "display": "17.9%",
+          "sector_benchmark": 12.76,
+          "word": "strong",
+          "tone": "good"
+        },
+        {
+          "key": "dividend_yield",
+          "label": "Dividend yield",
+          "value": 0.8085,
+          "display": "0.8%",
+          "sector_benchmark": 0.3461,
+          "word": "high",
+          "tone": "neutral"
+        }
+      ],
+      "peers_in_sector": 1
+    },
+    {
+      "symbol": "GOOGL",
+      "company": "Alphabet Inc",
+      "sector": "Media",
+      "price": 376.37,
+      "change_pct": -1.0438,
+      "verdict": "WATCH-BUY",
+      "composite": 0.451,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.5,
+        "technicals": 0.0,
+        "sentiment": 0.372
+      },
+      "reasons": [
+        "[fundamentals] P/E 28.6 (fair)",
+        "[fundamentals] Revenue growth 17.4% YoY > 5%",
+        "[fundamentals] Debt/Equity 0.16 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.37 over 50 stories (33+ / 8-, VADER)"
+      ],
+      "flags": [],
+      "alerts": [],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.372
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 28.5544,
+          "display": "28.6\u00d7",
+          "sector_benchmark": 22.7461,
+          "word": "expensive",
+          "tone": "bad"
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 7.2581,
+          "display": "7.3\u00d7",
+          "sector_benchmark": 5.9391,
+          "word": "expensive",
+          "tone": "bad"
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 10.8276,
+          "display": "10.8\u00d7",
+          "sector_benchmark": 7.4691,
+          "word": "expensive",
+          "tone": "bad"
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 60.37,
+          "display": "60.4%",
+          "sector_benchmark": 81.94,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 37.92,
+          "display": "37.9%",
+          "sector_benchmark": 32.84,
+          "word": "strong",
+          "tone": "good"
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 38.98,
+          "display": "39.0%",
+          "sector_benchmark": 33.22,
           "word": "strong",
           "tone": "good"
         },
@@ -1186,6 +1310,134 @@
           "tone": "good"
         },
         {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 17.45,
+          "display": "17.4%",
+          "sector_benchmark": 26.18,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "dividend_yield",
+          "label": "Dividend yield",
+          "value": 0.2314,
+          "display": "0.2%",
+          "sector_benchmark": 0.332,
+          "word": "low",
+          "tone": "neutral"
+        }
+      ],
+      "peers_in_sector": 1
+    },
+    {
+      "symbol": "AMZN",
+      "company": "Amazon.com Inc",
+      "sector": "Retail",
+      "price": 261.26,
+      "change_pct": -3.4659,
+      "verdict": "WATCH-BUY",
+      "composite": 0.448,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.5,
+        "technicals": 0.0,
+        "sentiment": 0.364
+      },
+      "reasons": [
+        "[fundamentals] P/E 31.1 (fair)",
+        "[fundamentals] Revenue growth 14.2% YoY > 5%",
+        "[fundamentals] Debt/Equity 0.27 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.36 over 50 stories (36+ / 7-, VADER)"
+      ],
+      "flags": [],
+      "alerts": [],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.364
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 31.1169,
+          "display": "31.1\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 5.0684,
+          "display": "5.1\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 3.8038,
+          "display": "3.8\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 50.6,
+          "display": "50.6%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 12.22,
+          "display": "12.2%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 23.34,
+          "display": "23.3%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 11.55,
+          "display": "11.6%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 1.1772,
+          "display": "1.2\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
           "key": "debt_to_equity",
           "label": "Debt/Equity",
           "value": 0.25,
@@ -1198,8 +1450,669 @@
         {
           "key": "rev_growth",
           "label": "Rev growth YoY",
-          "value": 17.9,
-          "display": "17.9%",
+          "value": 14.22,
+          "display": "14.2%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        }
+      ],
+      "peers_in_sector": 0
+    },
+    {
+      "symbol": "NVDA",
+      "company": "NVIDIA Corp",
+      "sector": "Semiconductors",
+      "price": 224.36,
+      "change_pct": 6.2612,
+      "verdict": "WATCH-BUY",
+      "composite": 0.46,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.5,
+        "technicals": 0.0,
+        "sentiment": 0.395
+      },
+      "reasons": [
+        "[fundamentals] P/E 33.2 (fair)",
+        "[fundamentals] Revenue growth 70.7% YoY > 5%",
+        "[fundamentals] Debt/Equity 0.04 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.39 over 50 stories (36+ / 7-, VADER)"
+      ],
+      "flags": [
+        "big_daily_move"
+      ],
+      "alerts": [
+        "Daily move +6.3% (>= 5%)"
+      ],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.395
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 33.2374,
+          "display": "33.2\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 26.9275,
+          "display": "26.9\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 20.9283,
+          "display": "20.9\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 74.15,
+          "display": "74.2%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 62.97,
+          "display": "63.0%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 111.66,
+          "display": "111.7%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 83.11,
+          "display": "83.1%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 3.4408,
+          "display": "3.4\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 0.0433,
+          "display": "0.0\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 70.68,
+          "display": "70.7%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "dividend_yield",
+          "label": "Dividend yield",
+          "value": 0.4736,
+          "display": "0.5%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        }
+      ],
+      "peers_in_sector": 0
+    },
+    {
+      "symbol": "META",
+      "company": "Meta Platforms Inc",
+      "sector": "Media",
+      "price": 600.47,
+      "change_pct": -5.0655,
+      "verdict": "WATCH-BUY",
+      "composite": 0.703,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.9,
+        "technicals": 0.0,
+        "sentiment": 0.387
+      },
+      "reasons": [
+        "[fundamentals] P/E 22.7 < 25 (attractive)",
+        "[fundamentals] Revenue growth 26.2% YoY > 5%",
+        "[fundamentals] Debt/Equity 0.24 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.39 over 50 stories (38+ / 6-, VADER)"
+      ],
+      "flags": [
+        "big_daily_move"
+      ],
+      "alerts": [
+        "Daily move -5.1% (>= 5%)"
+      ],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.387
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 22.7461,
+          "display": "22.7\u00d7",
+          "sector_benchmark": 28.5544,
+          "word": "cheap",
+          "tone": "good"
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 5.9391,
+          "display": "5.9\u00d7",
+          "sector_benchmark": 7.2581,
+          "word": "cheap",
+          "tone": "good"
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 7.4691,
+          "display": "7.5\u00d7",
+          "sector_benchmark": 10.8276,
+          "word": "cheap",
+          "tone": "good"
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 81.94,
+          "display": "81.9%",
+          "sector_benchmark": 60.37,
+          "word": "strong",
+          "tone": "good"
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 32.84,
+          "display": "32.8%",
+          "sector_benchmark": 37.92,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 33.22,
+          "display": "33.2%",
+          "sector_benchmark": 38.98,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 20.76,
+          "display": "20.8%",
+          "sector_benchmark": 27.41,
+          "word": "weak",
+          "tone": "bad"
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 2.3478,
+          "display": "2.3\u00d7",
+          "sector_benchmark": 1.9224,
+          "word": "strong",
+          "tone": "good"
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 0.2411,
+          "display": "0.2\u00d7",
+          "sector_benchmark": 0.1619,
+          "word": "heavy",
+          "tone": "bad"
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 26.18,
+          "display": "26.2%",
+          "sector_benchmark": 17.45,
+          "word": "strong",
+          "tone": "good"
+        },
+        {
+          "key": "dividend_yield",
+          "label": "Dividend yield",
+          "value": 0.332,
+          "display": "0.3%",
+          "sector_benchmark": 0.2314,
+          "word": "high",
+          "tone": "neutral"
+        }
+      ],
+      "peers_in_sector": 1
+    },
+    {
+      "symbol": "TSLA",
+      "company": "Tesla Inc",
+      "sector": "Automobiles",
+      "price": 415.88,
+      "change_pct": -4.5687,
+      "verdict": "NEUTRAL",
+      "composite": -0.098,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": -0.3,
+        "technicals": 0.0,
+        "sentiment": 0.224
+      },
+      "reasons": [
+        "[fundamentals] P/E 423.8 > 40 (rich)",
+        "[fundamentals] Revenue growth 2.2% YoY (soft)",
+        "[fundamentals] Debt/Equity 0.11 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.22 over 50 stories (28+ / 14-, VADER)"
+      ],
+      "flags": [
+        "high_pe"
+      ],
+      "alerts": [],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.224
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 423.7977,
+          "display": "423.8\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 16.5838,
+          "display": "16.6\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 16.7217,
+          "display": "16.7\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 19.07,
+          "display": "19.1%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 3.95,
+          "display": "4.0%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 4.77,
+          "display": "4.8%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 2.84,
+          "display": "2.8%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 2.0431,
+          "display": "2.0\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 0.1097,
+          "display": "0.1\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 2.25,
+          "display": "2.2%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        }
+      ],
+      "peers_in_sector": 0
+    },
+    {
+      "symbol": "JPM",
+      "company": "JPMorgan Chase & Co",
+      "sector": "Banking",
+      "price": 296.58,
+      "change_pct": -0.9121,
+      "verdict": "WATCH-BUY",
+      "composite": 0.435,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.5,
+        "technicals": 0.0,
+        "sentiment": 0.331
+      },
+      "reasons": [
+        "[fundamentals] P/E 13.5 < 25 (attractive)",
+        "[fundamentals] Revenue growth 109.0% YoY > 5%",
+        "[fundamentals] Debt/Equity 3.39 > 1.5 (leveraged)",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.33 over 50 stories (33+ / 12-, VADER)"
+      ],
+      "flags": [
+        "high_leverage"
+      ],
+      "alerts": [],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.331
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 13.5097,
+          "display": "13.5\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 2.1674,
+          "display": "2.2\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 2.896,
+          "display": "2.9\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 33.2645,
+          "display": "33.3%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 16.32,
+          "display": "16.3%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 1.28,
+          "display": "1.3%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 3.3882,
+          "display": "3.4\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 108.9793,
+          "display": "109.0%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "dividend_yield",
+          "label": "Dividend yield",
+          "value": 2.0046,
+          "display": "2.0%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        }
+      ],
+      "peers_in_sector": 0
+    },
+    {
+      "symbol": "V",
+      "company": "Visa Inc",
+      "sector": "Financial Services",
+      "price": 322.77,
+      "change_pct": -1.1,
+      "verdict": "WATCH-BUY",
+      "composite": 0.409,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.5,
+        "technicals": 0.0,
+        "sentiment": 0.264
+      },
+      "reasons": [
+        "[fundamentals] P/E 27.7 (fair)",
+        "[fundamentals] Revenue growth 14.4% YoY > 5%",
+        "[fundamentals] Debt/Equity 0.67 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.26 over 50 stories (32+ / 12-, VADER)"
+      ],
+      "flags": [],
+      "alerts": [],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.264
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 27.6535,
+          "display": "27.7\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 16.1541,
+          "display": "16.2\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 14.2911,
+          "display": "14.3\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 81.29,
+          "display": "81.3%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 51.68,
+          "display": "51.7%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 58.9,
+          "display": "58.9%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 22.72,
+          "display": "22.7%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 1.0877,
+          "display": "1.1\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 0.6723,
+          "display": "0.7\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 14.37,
+          "display": "14.4%",
           "sector_benchmark": null,
           "benchmark_source": null,
           "word": null,
@@ -1216,7 +2129,144 @@
           "tone": null
         }
       ],
-      "peers_in_sector": 4
+      "peers_in_sector": 0
+    },
+    {
+      "symbol": "JNJ",
+      "company": "Johnson & Johnson",
+      "sector": "Pharmaceuticals",
+      "price": 223.51,
+      "change_pct": -0.8077,
+      "verdict": "WATCH-BUY",
+      "composite": 0.433,
+      "coverage": 0.65,
+      "scores": {
+        "fundamentals": 0.5,
+        "technicals": 0.0,
+        "sentiment": 0.325
+      },
+      "reasons": [
+        "[fundamentals] P/E 25.5 (fair)",
+        "[fundamentals] Revenue growth 7.9% YoY > 5%",
+        "[fundamentals] Debt/Equity 0.68 < 1.5",
+        "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
+        "[sentiment] Headline sentiment +0.32 over 50 stories (36+ / 12-, VADER)"
+      ],
+      "flags": [],
+      "alerts": [],
+      "details": {
+        "technicals": {},
+        "sentiment": {
+          "source": "vader_headlines",
+          "stories": 50,
+          "avg": 0.325
+        }
+      },
+      "sources": {
+        "primary": "finnhub"
+      },
+      "fundamentals": [
+        {
+          "key": "pe",
+          "label": "P/E",
+          "value": 25.4646,
+          "display": "25.5\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "pb",
+          "label": "P/B",
+          "value": 7.1942,
+          "display": "7.2\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "ps",
+          "label": "P/S",
+          "value": 5.56,
+          "display": "5.6\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "gross_margin",
+          "label": "Gross margin",
+          "value": 67.95,
+          "display": "68.0%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "net_margin",
+          "label": "Net margin",
+          "value": 21.83,
+          "display": "21.8%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roe",
+          "label": "ROE",
+          "value": 26.26,
+          "display": "26.3%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "roa",
+          "label": "ROA",
+          "value": 10.7,
+          "display": "10.7%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "current_ratio",
+          "label": "Current ratio",
+          "value": 1.0252,
+          "display": "1.0\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "debt_to_equity",
+          "label": "Debt/Equity",
+          "value": 0.6773,
+          "display": "0.7\u00d7",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "rev_growth",
+          "label": "Rev growth YoY",
+          "value": 7.87,
+          "display": "7.9%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        },
+        {
+          "key": "dividend_yield",
+          "label": "Dividend yield",
+          "value": 2.3787,
+          "display": "2.4%",
+          "sector_benchmark": null,
+          "word": null,
+          "tone": null
+        }
+      ],
+      "peers_in_sector": 0
     }
   ],
   "sample": true

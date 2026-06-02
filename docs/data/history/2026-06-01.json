@@ -1,40 +1,36 @@
 {
-  "generated_at": "2026-06-01T09:51:39.642622+00:00",
+  "generated_at": "2026-06-01T23:01:15.667099+00:00",
   "count": 10,
   "tickers": [
     {
       "symbol": "AAPL",
       "company": "Apple Inc",
       "sector": "Technology",
-      "price": 312.06,
-      "change_pct": -0.144,
+      "price": 306.31,
+      "change_pct": -1.8426,
       "verdict": "WATCH-BUY",
-      "composite": 0.452,
+      "composite": 0.442,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.376
+        "sentiment": 0.348
       },
       "reasons": [
-        "[fundamentals] P/E 37.4 (fair)",
+        "[fundamentals] P/E 36.9 (fair)",
         "[fundamentals] Revenue growth 12.8% YoY > 5%",
         "[fundamentals] Debt/Equity 0.80 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.38 over 50 stories (38+ / 9-, VADER)"
+        "[sentiment] Headline sentiment +0.35 over 50 stories (32+ / 8-, VADER)"
       ],
-      "flags": [
-        "near_52wk_high"
-      ],
-      "alerts": [
-        "Near 52-wk high (312.06 vs 315)"
-      ],
+      "flags": [],
+      "alerts": [],
       "details": {
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.376
+          "avg": 0.348
         }
       },
       "sources": {
@@ -44,9 +40,9 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 37.3921,
-          "display": "37.4\u00d7",
-          "sector_benchmark": 26.7105,
+          "value": 36.8613,
+          "display": "36.9\u00d7",
+          "sector_benchmark": 27.4787,
           "word": "expensive",
           "tone": "bad"
         },
@@ -62,9 +58,9 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 10.1527,
-          "display": "10.2\u00d7",
-          "sector_benchmark": 10.5085,
+          "value": 10.0085,
+          "display": "10.0\u00d7",
+          "sector_benchmark": 10.8108,
           "word": "in line",
           "tone": "neutral"
         },
@@ -147,35 +143,31 @@
       "symbol": "MSFT",
       "company": "Microsoft Corp",
       "sector": "Technology",
-      "price": 450.24,
-      "change_pct": 5.4451,
+      "price": 460.52,
+      "change_pct": 2.2832,
       "verdict": "WATCH-BUY",
-      "composite": 0.451,
+      "composite": 0.462,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.372
+        "sentiment": 0.402
       },
       "reasons": [
-        "[fundamentals] P/E 26.7 (fair)",
+        "[fundamentals] P/E 27.5 (fair)",
         "[fundamentals] Revenue growth 17.9% YoY > 5%",
         "[fundamentals] Debt/Equity 0.25 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.37 over 50 stories (39+ / 10-, VADER)"
+        "[sentiment] Headline sentiment +0.40 over 50 stories (39+ / 7-, VADER)"
       ],
-      "flags": [
-        "big_daily_move"
-      ],
-      "alerts": [
-        "Daily move +5.4% (>= 5%)"
-      ],
+      "flags": [],
+      "alerts": [],
       "details": {
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.372
+          "avg": 0.402
         }
       },
       "sources": {
@@ -185,9 +177,9 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 26.7105,
-          "display": "26.7\u00d7",
-          "sector_benchmark": 37.3921,
+          "value": 27.4787,
+          "display": "27.5\u00d7",
+          "sector_benchmark": 36.8613,
           "word": "cheap",
           "tone": "good"
         },
@@ -203,9 +195,9 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 10.5085,
-          "display": "10.5\u00d7",
-          "sector_benchmark": 10.1527,
+          "value": 10.8108,
+          "display": "10.8\u00d7",
+          "sector_benchmark": 10.0085,
           "word": "in line",
           "tone": "neutral"
         },
@@ -288,22 +280,22 @@
       "symbol": "GOOGL",
       "company": "Alphabet Inc",
       "sector": "Media",
-      "price": 380.34,
-      "change_pct": -2.5094,
+      "price": 376.37,
+      "change_pct": -1.0438,
       "verdict": "WATCH-BUY",
-      "composite": 0.437,
+      "composite": 0.451,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.337
+        "sentiment": 0.372
       },
       "reasons": [
-        "[fundamentals] P/E 28.8 (fair)",
+        "[fundamentals] P/E 28.6 (fair)",
         "[fundamentals] Revenue growth 17.4% YoY > 5%",
         "[fundamentals] Debt/Equity 0.16 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.34 over 50 stories (37+ / 12-, VADER)"
+        "[sentiment] Headline sentiment +0.37 over 50 stories (33+ / 8-, VADER)"
       ],
       "flags": [],
       "alerts": [],
@@ -312,7 +304,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.337
+          "avg": 0.372
         }
       },
       "sources": {
@@ -322,8 +314,8 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 28.7639,
-          "display": "28.8\u00d7",
+          "value": 28.5544,
+          "display": "28.6\u00d7",
           "sector_benchmark": 22.7461,
           "word": "expensive",
           "tone": "bad"
@@ -340,8 +332,8 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 10.907,
-          "display": "10.9\u00d7",
+          "value": 10.8276,
+          "display": "10.8\u00d7",
           "sector_benchmark": 7.4691,
           "word": "expensive",
           "tone": "bad"
@@ -425,22 +417,22 @@
       "symbol": "AMZN",
       "company": "Amazon.com Inc",
       "sector": "Retail",
-      "price": 270.64,
-      "change_pct": -1.2263,
+      "price": 261.26,
+      "change_pct": -3.4659,
       "verdict": "WATCH-BUY",
-      "composite": 0.42,
+      "composite": 0.448,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.292
+        "sentiment": 0.364
       },
       "reasons": [
-        "[fundamentals] P/E 32.1 (fair)",
+        "[fundamentals] P/E 31.1 (fair)",
         "[fundamentals] Revenue growth 14.2% YoY > 5%",
         "[fundamentals] Debt/Equity 0.27 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.29 over 50 stories (36+ / 12-, VADER)"
+        "[sentiment] Headline sentiment +0.36 over 50 stories (36+ / 7-, VADER)"
       ],
       "flags": [],
       "alerts": [],
@@ -449,7 +441,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.292
+          "avg": 0.364
         }
       },
       "sources": {
@@ -459,8 +451,8 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 32.0635,
-          "display": "32.1\u00d7",
+          "value": 31.1169,
+          "display": "31.1\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -477,8 +469,8 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 3.9195,
-          "display": "3.9\u00d7",
+          "value": 3.8038,
+          "display": "3.8\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -553,31 +545,35 @@
       "symbol": "NVDA",
       "company": "NVIDIA Corp",
       "sector": "Semiconductors",
-      "price": 211.14,
-      "change_pct": -1.4516,
+      "price": 224.36,
+      "change_pct": 6.2612,
       "verdict": "WATCH-BUY",
-      "composite": 0.484,
+      "composite": 0.46,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.458
+        "sentiment": 0.395
       },
       "reasons": [
-        "[fundamentals] P/E 32.0 (fair)",
+        "[fundamentals] P/E 33.2 (fair)",
         "[fundamentals] Revenue growth 70.7% YoY > 5%",
         "[fundamentals] Debt/Equity 0.04 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.46 over 50 stories (39+ / 8-, VADER)"
+        "[sentiment] Headline sentiment +0.39 over 50 stories (36+ / 7-, VADER)"
       ],
-      "flags": [],
-      "alerts": [],
+      "flags": [
+        "big_daily_move"
+      ],
+      "alerts": [
+        "Daily move +6.3% (>= 5%)"
+      ],
       "details": {
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.458
+          "avg": 0.395
         }
       },
       "sources": {
@@ -587,8 +583,8 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 32.0124,
-          "display": "32.0\u00d7",
+          "value": 33.2374,
+          "display": "33.2\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -605,8 +601,8 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 20.1569,
-          "display": "20.2\u00d7",
+          "value": 20.9283,
+          "display": "20.9\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -690,31 +686,35 @@
       "symbol": "META",
       "company": "Meta Platforms Inc",
       "sector": "Media",
-      "price": 632.51,
-      "change_pct": -0.4376,
+      "price": 600.47,
+      "change_pct": -5.0655,
       "verdict": "WATCH-BUY",
-      "composite": 0.653,
+      "composite": 0.703,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.9,
         "technicals": 0.0,
-        "sentiment": 0.257
+        "sentiment": 0.387
       },
       "reasons": [
         "[fundamentals] P/E 22.7 < 25 (attractive)",
         "[fundamentals] Revenue growth 26.2% YoY > 5%",
         "[fundamentals] Debt/Equity 0.24 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.26 over 50 stories (35+ / 13-, VADER)"
+        "[sentiment] Headline sentiment +0.39 over 50 stories (38+ / 6-, VADER)"
       ],
-      "flags": [],
-      "alerts": [],
+      "flags": [
+        "big_daily_move"
+      ],
+      "alerts": [
+        "Daily move -5.1% (>= 5%)"
+      ],
       "details": {
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.257
+          "avg": 0.387
         }
       },
       "sources": {
@@ -726,7 +726,7 @@
           "label": "P/E",
           "value": 22.7461,
           "display": "22.7\u00d7",
-          "sector_benchmark": 28.7639,
+          "sector_benchmark": 28.5544,
           "word": "cheap",
           "tone": "good"
         },
@@ -744,7 +744,7 @@
           "label": "P/S",
           "value": 7.4691,
           "display": "7.5\u00d7",
-          "sector_benchmark": 10.907,
+          "sector_benchmark": 10.8276,
           "word": "cheap",
           "tone": "good"
         },
@@ -827,22 +827,22 @@
       "symbol": "TSLA",
       "company": "Tesla Inc",
       "sector": "Automobiles",
-      "price": 435.79,
-      "change_pct": -1.4273,
+      "price": 415.88,
+      "change_pct": -4.5687,
       "verdict": "NEUTRAL",
-      "composite": -0.034,
+      "composite": -0.098,
       "coverage": 0.65,
       "scores": {
         "fundamentals": -0.3,
         "technicals": 0.0,
-        "sentiment": 0.392
+        "sentiment": 0.224
       },
       "reasons": [
         "[fundamentals] P/E 423.8 > 40 (rich)",
         "[fundamentals] Revenue growth 2.2% YoY (soft)",
         "[fundamentals] Debt/Equity 0.11 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.39 over 50 stories (37+ / 5-, VADER)"
+        "[sentiment] Headline sentiment +0.22 over 50 stories (28+ / 14-, VADER)"
       ],
       "flags": [
         "high_pe"
@@ -853,7 +853,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.392
+          "avg": 0.224
         }
       },
       "sources": {
@@ -957,22 +957,22 @@
       "symbol": "JPM",
       "company": "JPMorgan Chase & Co",
       "sector": "Banking",
-      "price": 299.31,
-      "change_pct": 0.8695,
+      "price": 296.58,
+      "change_pct": -0.9121,
       "verdict": "WATCH-BUY",
-      "composite": 0.43,
+      "composite": 0.435,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.317
+        "sentiment": 0.331
       },
       "reasons": [
-        "[fundamentals] P/E 13.6 < 25 (attractive)",
+        "[fundamentals] P/E 13.5 < 25 (attractive)",
         "[fundamentals] Revenue growth 109.0% YoY > 5%",
         "[fundamentals] Debt/Equity 3.39 > 1.5 (leveraged)",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.32 over 50 stories (32+ / 12-, VADER)"
+        "[sentiment] Headline sentiment +0.33 over 50 stories (33+ / 12-, VADER)"
       ],
       "flags": [
         "high_leverage"
@@ -983,7 +983,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.317
+          "avg": 0.331
         }
       },
       "sources": {
@@ -993,8 +993,8 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 13.6166,
-          "display": "13.6\u00d7",
+          "value": 13.5097,
+          "display": "13.5\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -1078,22 +1078,22 @@
       "symbol": "V",
       "company": "Visa Inc",
       "sector": "Financial Services",
-      "price": 326.36,
-      "change_pct": 0.4339,
+      "price": 322.77,
+      "change_pct": -1.1,
       "verdict": "WATCH-BUY",
-      "composite": 0.437,
+      "composite": 0.409,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.337
+        "sentiment": 0.264
       },
       "reasons": [
-        "[fundamentals] P/E 27.6 (fair)",
+        "[fundamentals] P/E 27.7 (fair)",
         "[fundamentals] Revenue growth 14.4% YoY > 5%",
         "[fundamentals] Debt/Equity 0.67 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.34 over 50 stories (33+ / 9-, VADER)"
+        "[sentiment] Headline sentiment +0.26 over 50 stories (32+ / 12-, VADER)"
       ],
       "flags": [],
       "alerts": [],
@@ -1102,7 +1102,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.337
+          "avg": 0.264
         }
       },
       "sources": {
@@ -1112,8 +1112,8 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 27.5833,
-          "display": "27.6\u00d7",
+          "value": 27.6535,
+          "display": "27.7\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -1130,7 +1130,7 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 14.2548,
+          "value": 14.2911,
           "display": "14.3\u00d7",
           "sector_benchmark": null,
           "word": null,
@@ -1215,22 +1215,22 @@
       "symbol": "JNJ",
       "company": "Johnson & Johnson",
       "sector": "Pharmaceuticals",
-      "price": 225.33,
-      "change_pct": -2.37,
+      "price": 223.51,
+      "change_pct": -0.8077,
       "verdict": "WATCH-BUY",
       "composite": 0.433,
       "coverage": 0.65,
       "scores": {
         "fundamentals": 0.5,
         "technicals": 0.0,
-        "sentiment": 0.327
+        "sentiment": 0.325
       },
       "reasons": [
-        "[fundamentals] P/E 25.8 (fair)",
+        "[fundamentals] P/E 25.5 (fair)",
         "[fundamentals] Revenue growth 7.9% YoY > 5%",
         "[fundamentals] Debt/Equity 0.68 < 1.5",
         "[technicals] technicals: unavailable (/stock/candle -> HTTP 403 (no access on this API plan). Some Finnhub free plans gate /stock/candle.)",
-        "[sentiment] Headline sentiment +0.33 over 50 stories (36+ / 11-, VADER)"
+        "[sentiment] Headline sentiment +0.32 over 50 stories (36+ / 12-, VADER)"
       ],
       "flags": [],
       "alerts": [],
@@ -1239,7 +1239,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 50,
-          "avg": 0.327
+          "avg": 0.325
         }
       },
       "sources": {
@@ -1249,8 +1249,8 @@
         {
           "key": "pe",
           "label": "P/E",
-          "value": 25.7803,
-          "display": "25.8\u00d7",
+          "value": 25.4646,
+          "display": "25.5\u00d7",
           "sector_benchmark": null,
           "word": null,
           "tone": null
@@ -1267,7 +1267,7 @@
         {
           "key": "ps",
           "label": "P/S",
-          "value": 5.629,
+          "value": 5.56,
           "display": "5.6\u00d7",
           "sector_benchmark": null,
           "word": null,
