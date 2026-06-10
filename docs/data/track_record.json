@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-06-10T06:06:43.599908+00:00",
+  "horizons": [
+    30,
+    90
+  ],
+  "by_horizon": {
+    "30": {
+      "baseline_avg_return": null,
+      "baseline_n": 0,
+      "verdicts": {}
+    },
+    "90": {
+      "baseline_avg_return": null,
+      "baseline_n": 0,
+      "verdicts": {}
+    }
+  }
+}
