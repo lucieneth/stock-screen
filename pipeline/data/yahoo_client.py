@@ -20,7 +20,11 @@ from datetime import datetime, timezone
 
 import requests
 
-BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/"
+BASE_URLS = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/",
+    "https://query2.finance.yahoo.com/v8/finance/chart/",
+)
+BASE_URL = BASE_URLS[0]  # kept for callers/tests that reference it
 # Yahoo rejects the default python-requests UA; present as a browser.
 HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                          "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
@@ -44,15 +48,20 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
     params = {"range": _range_for(days), "interval": "1d"}
     backoff = 1.0
     last_exc: Exception | None = None
-    for _ in range(3):
+    for attempt in range(3):
+        # Rotate hosts between attempts — datacenter IPs (e.g. GitHub Actions
+        # runners) sometimes get bot-walled on one edge but not the other.
+        base = BASE_URLS[attempt % len(BASE_URLS)]
         try:
-            resp = session.get(BASE_URL + symbol, params=params, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
+            resp = session.get(base + symbol, params=params, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
         except requests.RequestException as exc:
             last_exc = exc
             time.sleep(backoff)
             backoff *= 2
             continue
-        if resp.status_code == 429 or resp.status_code >= 500:
+        if resp.status_code in (401, 403, 429, 999) or resp.status_code >= 500:
+            # 401/403/999 are Yahoo's bot-wall responses; worth retrying on the
+            # other host rather than failing immediately.
             last_exc = YahooError(f"HTTP {resp.status_code}")
             time.sleep(backoff)
             backoff *= 2
@@ -63,7 +72,7 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
     raise YahooError(f"{symbol}: failed after retries: {last_exc}")
 
 
-def get_many(symbols: list[str], days: int = 400, workers: int = 8) -> dict[str, dict]:
+def get_many(symbols: list[str], days: int = 400, workers: int = 4) -> dict[str, dict]:
     """Fetch OHLCV for many symbols in parallel (Yahoo has no rate limit).
 
     Returns {symbol: ohlcv_dict} where a failed fetch is {"error": "..."} so the

@@ -21,6 +21,7 @@ from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 
 from pipeline.data import yahoo_client as yahoo
+from pipeline.data import fmp_client as fmp
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORY_DIR = REPO_ROOT / "docs" / "data" / "history"
@@ -48,11 +49,14 @@ def _load_snapshots() -> list[tuple[date, list[dict]]]:
 
 
 def _price_index(symbol: str) -> list[tuple[date, float]]:
-    """Sorted [(date, close)] from Yahoo, or [] on failure."""
+    """Sorted [(date, close)] from Yahoo (FMP fallback), or [] on failure."""
     try:
         ohlcv = yahoo.get_ohlcv(symbol, days=1700)
     except yahoo.YahooError:
-        return []
+        try:
+            ohlcv = fmp.get_ohlcv(symbol, days=1700)
+        except fmp.FMPError:
+            return []
     pairs = []
     for ds, c in zip(ohlcv.get("t", []), ohlcv.get("c", [])):
         try:

@@ -50,26 +50,44 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
 
 
 # How long cached fetches stay fresh (days). Fundamentals/series move
-# quarterly, profiles ~never, earnings until the date passes.
+# quarterly, profiles ~never, earnings until the date passes. OHLCV: a stale
+# copy (weekend-safe TTL) is a last resort when every live source fails.
 TTL_FUND = 7
 TTL_PROFILE = 30
 TTL_EARN = 5
+TTL_OHLCV_STALE = 5
+
+# Only cache the metric keys we actually read (extraction + alerts) and the
+# chart series we plot — Finnhub returns hundreds more, and committing those
+# daily would bloat the repo for nothing.
+_KEEP_METRIC_KEYS = ({k for m in metrics.METRICS for k in m.finnhub}
+                     | {"52WeekHigh", "52WeekLow"})
 
 
-def _metric_bundle(symbol: str, fc) -> dict:
+def _slim_bundle(bundle: dict) -> dict:
+    metric = {k: v for k, v in (bundle.get("metric") or {}).items() if k in _KEEP_METRIC_KEYS}
+    quarterly = (bundle.get("series") or {}).get("quarterly") or {}
+    keep_series = set(metrics.SERIES_KEYS.values())
+    series = {"quarterly": {k: v[-16:] for k, v in quarterly.items()
+                            if k in keep_series and isinstance(v, list)}}
+    return {"metric": metric, "series": series}
+
+
+def _metric_bundle(symbol: str, fc, sources: dict) -> dict:
     """Finnhub /stock/metric (metric + series), cached — the heaviest call."""
     v = fc.get(f"metric:{symbol}", TTL_FUND)
     if v is not None:
         return v
     try:
-        v = fh.get_company_metrics(symbol)
+        v = _slim_bundle(fh.get_company_metrics(symbol))
         fc.set(f"metric:{symbol}", v)
         return v
-    except fh.FinnhubError:
+    except fh.FinnhubError as exc:
+        sources["metric_error"] = str(exc)[:160]
         return {"metric": {}, "series": {}}
 
 
-def _fmp_fundamentals(symbol: str, fc, use_fmp: bool) -> dict:
+def _fmp_fundamentals(symbol: str, fc, use_fmp: bool, sources: dict) -> dict:
     if not use_fmp:
         return {}
     v = fc.get(f"fmpfund:{symbol}", TTL_FUND)
@@ -79,8 +97,37 @@ def _fmp_fundamentals(symbol: str, fc, use_fmp: bool) -> dict:
         v = fmp.get_fundamentals(symbol)
         fc.set(f"fmpfund:{symbol}", v)
         return v
-    except fmp.FMPError:
+    except fmp.FMPError as exc:
+        sources["fmp_fund_error"] = str(exc)[:160]
         return {}
+
+
+def _resolve_ohlcv(symbol: str, prefetched: dict | None, use_fmp: bool, fc,
+                   want: int, sources: dict) -> dict:
+    """OHLCV fallback chain: Yahoo (prefetched) -> FMP -> stale cache.
+
+    On success the closes are cached so a future all-sources-down run can still
+    show a (slightly stale) sparkline and technicals.
+    """
+    ohlcv = prefetched if isinstance(prefetched, dict) else {"error": "no OHLCV prefetched"}
+    if "error" not in ohlcv:
+        sources["ohlcv"] = "yahoo"
+    else:
+        sources["ohlcv_error"] = f"yahoo: {ohlcv['error']}"[:160]
+        if use_fmp:
+            try:
+                ohlcv = fmp.get_ohlcv(symbol, days=want)
+                sources["ohlcv"] = "fmp"
+            except fmp.FMPError as exc:
+                sources["ohlcv_error"] += f" | fmp: {exc}"[:160]
+    if "error" not in ohlcv:
+        fc.set(f"ohlcv:{symbol}", {"c": ohlcv.get("c") or []})
+        return ohlcv
+    stale = fc.get(f"ohlcv:{symbol}", TTL_OHLCV_STALE)
+    if isinstance(stale, dict) and stale.get("c"):
+        sources["ohlcv"] = "cache(stale)"
+        return {"s": "ok", "c": stale["c"]}
+    return ohlcv  # still the error dict
 
 
 def _profile(symbol: str, fc, use_fmp: bool) -> dict:
@@ -132,23 +179,34 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True,
     fresh Finnhub call left is company news.
     """
     thresholds = cfg.get("thresholds", {})
-    sources = {"price": "yahoo", "fmp_enabled": use_fmp}
+    sources = {"fmp_enabled": use_fmp}
     fc = fc or fetch_cache.FetchCache(None)   # memory-only if not supplied
-    ohlcv = ohlcv if isinstance(ohlcv, dict) else {"error": "no OHLCV prefetched"}
-    if "error" in ohlcv:
-        sources["ohlcv_error"] = ohlcv["error"]
+
+    slow_w = int(thresholds.get("technicals", {}).get("sma_slow", 200))
+    ohlcv = _resolve_ohlcv(symbol, ohlcv, use_fmp, fc, max(slow_w + 50, 400), sources)
 
     # Quote derived from daily closes (after-close cron): price = last close,
-    # change = close-to-close.
+    # change = close-to-close. If every candle source failed, fall back to a
+    # live Finnhub quote (one paced call) so price is never silently absent.
     closes = ohlcv.get("c") or []
-    price = round(float(closes[-1]), 2) if closes else None
-    change_pct = (round((closes[-1] / closes[-2] - 1) * 100, 2)
-                  if len(closes) >= 2 and closes[-2] else None)
+    if closes:
+        sources["price"] = sources.get("ohlcv", "yahoo")
+        price = round(float(closes[-1]), 2)
+        change_pct = (round((closes[-1] / closes[-2] - 1) * 100, 2)
+                      if len(closes) >= 2 and closes[-2] else None)
+    else:
+        try:
+            q = fh.get_quote(symbol)
+            price, change_pct = q.get("c"), q.get("dp")
+            sources["price"] = "finnhub_quote"
+        except fh.FinnhubError as exc:
+            price = change_pct = None
+            sources["price_error"] = str(exc)[:160]
 
-    bundle = _metric_bundle(symbol, fc)
+    bundle = _metric_bundle(symbol, fc, sources)
     fin_finnhub = bundle.get("metric") or {}
     series = bundle.get("series") or {}
-    fin_fmp = _fmp_fundamentals(symbol, fc, use_fmp)
+    fin_fmp = _fmp_fundamentals(symbol, fc, use_fmp, sources)
     if fin_finnhub and fin_fmp:
         sources["fundamentals"] = "finnhub+fmp"
     elif fin_fmp:
@@ -160,8 +218,9 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True,
 
     try:
         news = fh.get_company_news(symbol)
-    except fh.FinnhubError:
+    except fh.FinnhubError as exc:
         news = []
+        sources["news_error"] = str(exc)[:160]
 
     # Peer-independent checks now; fundamentals scoring waits for benchmarks.
     merged_fin = {**fin_fmp, **fin_finnhub}
@@ -173,6 +232,15 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True,
     spark = [round(float(c), 2) for c in closes[-63:]]  # ~one quarter of trading days
     next_earnings = _earnings(symbol, fc)
 
+    # An explicit inventory of what couldn't be fetched, so gaps are visible on
+    # the dashboard and in the run log instead of silently shrinking the data.
+    missing = [name for name, ok in (
+        ("price", price is not None),
+        ("ohlcv", bool(closes)),
+        ("fundamentals", bool(fin_finnhub or fin_fmp)),
+        ("news", bool(news)),
+    ) if not ok]
+
     return {
         "symbol": symbol,
         "company": profile.get("companyName"),
@@ -181,6 +249,7 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True,
         "change_pct": change_pct,
         "spark": spark,
         "next_earnings": next_earnings,
+        "missing": missing,
         "flags": sorted(alerts.get("flags", [])),
         "alerts": alerts.get("reasons", []),
         "details": {
@@ -259,11 +328,23 @@ def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
     for i, symbol in enumerate(watchlist, 1):
         rec = attempt(symbol)
         records.append(rec)
-        state = "error" if "error" in rec else "ok"
+        if "error" in rec:
+            state = "ERROR"
+        elif rec.get("missing"):
+            state = "partial: missing " + ",".join(rec["missing"])
+        else:
+            state = "ok"
         print(f"[{i}/{total}] {symbol} ({state})", flush=True)
         # Finnhub calls are paced globally by finnhub_client._throttle().
 
     fc.save()
+    gap_counts: dict[str, int] = {}
+    for r in records:
+        for m in r.get("missing", []):
+            gap_counts[m] = gap_counts.get(m, 0) + 1
+    if gap_counts:
+        print(f"DATA GAPS across {total} tickers: {gap_counts} — see each record's "
+              "'sources' for the cause.", flush=True)
 
     # Run-level retry: any ticker that failed *because of* a rate limit gets one
     # more pass after a cooldown that lets the per-minute quota refill. Other

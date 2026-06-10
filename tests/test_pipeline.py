@@ -110,6 +110,50 @@ def test_score_agrees_with_labels(wired):
                 assert (label, word) in words, f"score reason {reason!r} not backed by a label"
 
 
+def test_yahoo_down_falls_back_to_fmp_candles(wired, monkeypatch):
+    yahoo_fail = lambda *a, **k: (_ for _ in ()).throw(runner.yahoo.YahooError("HTTP 999 bot wall"))
+    monkeypatch.setattr(runner.yahoo, "get_ohlcv", yahoo_fail)
+    monkeypatch.setattr(runner.fmp, "get_ohlcv", lambda s, **k: {"c": _uptrend(), "s": "ok"})
+    monkeypatch.setenv("FMP_API_KEY", "x")
+    monkeypatch.setattr(runner.fmp, "get_fundamentals",
+                        lambda *a, **k: (_ for _ in ()).throw(runner.fmp.FMPError("x")))
+    out = runner.run(CFG)
+    for r in out["tickers"]:
+        assert r["sources"]["ohlcv"] == "fmp"
+        assert r["sources"]["price"] == "fmp"
+        assert r["price"] is not None and r["spark"]
+        assert r["missing"] == []                     # nothing lost — chain worked
+
+
+def test_all_candle_sources_down_price_from_finnhub_quote(wired, monkeypatch):
+    """The exact production incident: Yahoo bot-walled, no FMP. Price must
+    survive via the Finnhub quote and the gap must be visible, not silent."""
+    yahoo_fail = lambda *a, **k: (_ for _ in ()).throw(runner.yahoo.YahooError("HTTP 999 bot wall"))
+    monkeypatch.setattr(runner.yahoo, "get_ohlcv", yahoo_fail)
+    monkeypatch.setattr(runner.fh, "get_quote", lambda s, **k: {"c": 123.45, "dp": -1.2})
+    out = runner.run(CFG)
+    for r in out["tickers"]:
+        assert r["price"] == 123.45                  # quote fallback fired
+        assert r["sources"]["price"] == "finnhub_quote"
+        assert "ohlcv" in r["missing"]               # gap is declared…
+        assert "price" not in r["missing"]           # …but price isn't lost
+        assert "yahoo" in r["sources"]["ohlcv_error"]
+
+
+def test_stale_ohlcv_cache_used_when_sources_down(wired, monkeypatch, tmp_path):
+    # First run succeeds (warms the per-symbol OHLCV cache)…
+    out = runner.run(CFG)
+    assert all(r["missing"] == [] for r in out["tickers"])
+    # …then every live candle source dies; the stale cache keeps charts alive.
+    yahoo_fail = lambda *a, **k: (_ for _ in ()).throw(runner.yahoo.YahooError("down"))
+    monkeypatch.setattr(runner.yahoo, "get_ohlcv", yahoo_fail)
+    out2 = runner.run(CFG)
+    for r in out2["tickers"]:
+        assert r["sources"]["ohlcv"] == "cache(stale)"
+        assert r["spark"] and r["price"] is not None
+        assert r["missing"] == []
+
+
 def test_rate_limited_ticker_retried_others_not(wired, monkeypatch):
     calls = {"AAPL": 0, "JPM": 0}
     real = runner.assemble_one
