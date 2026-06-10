@@ -1,35 +1,20 @@
-// app.js — fetches data/latest.json and renders the dashboard. (Phase 3)
+// app.js — renders the screener dashboard from data/*.json. (no build step)
 //
 // SECURITY: this file is public. No API keys, ever. It only reads the
-// pipeline-generated data/latest.json.
+// pipeline-generated data/latest.json + data/track_record.json.
 
-// Repo that backs the watchlist issue form. Change if you fork.
-const REPO = "OkPeach/stock-screen";
+const REPO = "OkPeach/stock-screen";   // backs the add/remove issue form
+const VCLASS = { "WATCH-BUY": "buy", "NEUTRAL": "neutral", "WATCH-SELL": "sell" };
 
-const VERDICT_CLASS = {
-  "WATCH-BUY": "buy",
-  "NEUTRAL": "neutral",
-  "WATCH-SELL": "sell",
+const state = {
+  tickers: [],
+  search: "",
+  verdict: "ALL",
+  sort: "composite-desc",
 };
+let drawerChart = null;
 
-let allTickers = [];
-// key "SYMBOL:metric" -> { points:[[period,val]], benchmark, label, unit }
-const chartData = {};
-
-function manage(action) {
-  const t = document.getElementById("manage-ticker").value.trim().toUpperCase();
-  if (!t) {
-    document.getElementById("manage-ticker").focus();
-    return;
-  }
-  const params = new URLSearchParams({
-    template: "watchlist.yml",
-    title: `[watchlist] ${action} ${t}`,
-    action: action === "add" ? "Add" : "Remove",
-    tickers: t,
-  });
-  window.open(`https://github.com/${REPO}/issues/new?${params}`, "_blank", "noopener");
-}
+/* ---------------- data load ---------------- */
 
 async function load() {
   const status = document.getElementById("status");
@@ -37,35 +22,105 @@ async function load() {
     const resp = await fetch("data/latest.json", { cache: "no-store" });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
-    allTickers = Array.isArray(data.tickers) ? data.tickers : [];
-    renderUpdated(data);
+    state.tickers = Array.isArray(data.tickers) ? data.tickers : [];
+    setUpdated(data);
     renderChanges(data.changes);
     status.style.display = "none";
     apply();
   } catch (err) {
-    status.textContent =
-      "No data yet. Run the pipeline (or the GitHub Action) to generate data/latest.json. " +
-      `(${err.message})`;
+    status.textContent = `No data yet — run the pipeline to generate data/latest.json. (${err.message})`;
   }
+  loadTrackRecord();
 }
 
 async function loadTrackRecord() {
-  const el = document.getElementById("track-record");
   try {
     const resp = await fetch("data/track_record.json", { cache: "no-store" });
-    if (!resp.ok) return;
-    renderTrack(el, await resp.json());
-  } catch { /* track record is optional */ }
+    if (resp.ok) renderHero(await resp.json());
+    else renderHero(null);
+  } catch { renderHero(null); }
 }
 
-function pct(v) { return `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`; }
+/* ---------------- helpers ---------------- */
 
-function renderTrack(el, data) {
-  const horizons = data.horizons || [];
-  if (!horizons.length) return;
-  const parts = [];
-  for (const h of horizons) {
-    const hz = (data.by_horizon || {})[String(h)];
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+const num = (v) => (typeof v === "number" ? v : null);
+const fmtPct = (v) => (typeof v === "number" ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}%` : "—");
+const fmtScore = (v) => (typeof v === "number" ? v.toFixed(2) : "—");
+const fmtMoney = (v) => (typeof v === "number" ? "$" + v.toFixed(2) : "—");
+const pct = (v) => `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`;
+
+function setUpdated(data) {
+  const el = document.getElementById("updated");
+  if (!data.generated_at) return;
+  const when = new Date(data.generated_at);
+  el.textContent = `Updated ${when.toLocaleString()}${data.sample ? " · sample" : ""}`;
+}
+
+// Tiny inline SVG price line (cards + fundamentals rows).
+function sparklineSvg(series, opts = {}) {
+  if (!Array.isArray(series) || series.length < 2) return "";
+  const W = opts.w || 84, H = opts.h || 30, n = series.length;
+  let lo = Math.min(...series), hi = Math.max(...series);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const x = (i) => (i * W) / (n - 1);
+  const y = (v) => 2 + (1 - (v - lo) / (hi - lo)) * (H - 4);
+  const pts = series.map((c, i) => `${x(i).toFixed(1)},${y(c).toFixed(1)}`).join(" ");
+  const up = series[n - 1] >= series[0];
+  const col = up ? "var(--up)" : "var(--down)";
+  return `<svg viewBox="0 0 ${W} ${H}" class="spark" preserveAspectRatio="none" aria-hidden="true">
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
+}
+
+function scoreBar(letter, v) {
+  const val = num(v) ?? 0;
+  const w = Math.min(50, Math.abs(val) * 50);
+  const side = val >= 0 ? "pos" : "neg";
+  const style = val >= 0 ? `left:50%;width:${w}%` : `right:50%;left:auto;width:${w}%`;
+  return `<div class="bar-row"><span>${letter}</span>
+    <div class="bar-track"><div class="bar-fill ${side}" style="${style}"></div></div>
+    <span class="bar-val">${fmtScore(v)}</span></div>`;
+}
+
+function earningsDays(dateStr) {
+  if (!dateStr) return null;
+  const d = Math.ceil((new Date(dateStr + "T00:00:00Z") - Date.now()) / 86400000);
+  return (isNaN(d) || d < 0 || d > 120) ? null : d;
+}
+
+/* ---------------- hero ---------------- */
+
+function renderHero(track) {
+  const el = document.getElementById("hero");
+  const live = state.tickers.filter((t) => !t.error);
+  if (!live.length) { el.hidden = true; return; }
+  const counts = { "WATCH-BUY": 0, "NEUTRAL": 0, "WATCH-SELL": 0 };
+  live.forEach((t) => { if (counts[t.verdict] != null) counts[t.verdict]++; });
+  const total = live.length;
+  const seg = (v, cls) => `<div class="dist-seg ${cls}" style="width:${(counts[v] / total) * 100}%"></div>`;
+
+  el.innerHTML = `
+    <div class="hero-card">
+      <h3>${total} stocks screened</h3>
+      <div class="dist-bar">${seg("WATCH-BUY", "buy")}${seg("NEUTRAL", "neutral")}${seg("WATCH-SELL", "sell")}</div>
+      <div class="dist-legend">
+        <div><span class="dot buy"></span>Watch-Buy<br><span class="n">${counts["WATCH-BUY"]}</span></div>
+        <div><span class="dot neutral"></span>Neutral<br><span class="n">${counts["NEUTRAL"]}</span></div>
+        <div><span class="dot sell"></span>Watch-Sell<br><span class="n">${counts["WATCH-SELL"]}</span></div>
+      </div>
+    </div>
+    <div class="hero-card"><h3>Track record</h3>${trackHtml(track)}</div>`;
+  el.hidden = false;
+}
+
+function trackHtml(track) {
+  if (!track || !track.horizons) return `<p class="tr-muted">Building — grades verdicts as horizons elapse.</p>`;
+  const rows = [];
+  for (const h of track.horizons) {
+    const hz = (track.by_horizon || {})[String(h)];
     if (!hz) continue;
     const base = hz.baseline_avg_return;
     const chips = [];
@@ -73,220 +128,28 @@ function renderTrack(el, data) {
       const s = (hz.verdicts || {})[v];
       if (!s || !s.n) continue;
       const cls = v === "WATCH-BUY" ? "buy" : "sell";
+      const lbl = v === "WATCH-BUY" ? "Buy" : "Sell";
       if (!s.confident) {
-        chips.push(`<span class="tr-chip ${cls}">${v === "WATCH-BUY" ? "Buy" : "Sell"}: building (n=${s.n})</span>`);
+        chips.push(`<span class="tr-chip ${cls}">${lbl}: building (n=${s.n})</span>`);
       } else {
         const good = s.hit_rate >= 0.5;
-        chips.push(`<span class="tr-chip ${cls}" title="avg ${pct(s.avg_return)} vs basket ${base != null ? pct(base) : "—"}">` +
-          `${v === "WATCH-BUY" ? "Buy" : "Sell"}: <strong class="${good ? "tr-good" : "tr-bad"}">${Math.round(s.hit_rate * 100)}% hit</strong> · ${pct(s.avg_return)} (basket ${base != null ? pct(base) : "—"}) · n=${s.n}</span>`);
+        chips.push(`<span class="tr-chip ${cls}" title="avg ${pct(s.avg_return)} vs basket ${base != null ? pct(base) : "—"}">${lbl}: <span class="${good ? "tr-good" : "tr-bad"}">${Math.round(s.hit_rate * 100)}% hit</span> · ${pct(s.avg_return)} · n=${s.n}</span>`);
       }
     }
-    if (chips.length) parts.push(`<div class="tr-row"><span class="tr-h">${h}d</span>${chips.join("")}</div>`);
+    if (chips.length) rows.push(`<div class="tr-line"><span class="tr-h">${h}d</span>${chips.join("")}</div>`);
   }
-  if (!parts.length) {
-    el.innerHTML = `<span class="tr-title">Track record</span> <span class="tr-muted">building — grading verdicts as horizons elapse</span>`;
-  } else {
-    el.innerHTML = `<span class="tr-title">Track record</span>${parts.join("")}` +
-      `<span class="tr-muted">forward return after verdict, vs holding the whole watchlist (“basket”)</span>`;
-  }
-  el.hidden = false;
+  if (!rows.length) return `<p class="tr-muted">Building — grades verdicts as horizons elapse.</p>`;
+  return `<div class="tr-headline">${rows.join("")}<span class="tr-muted">forward return after verdict, vs holding the whole watchlist.</span></div>`;
 }
 
-function renderUpdated(data) {
-  const el = document.getElementById("updated");
-  if (!data.generated_at) return;
-  const when = new Date(data.generated_at);
-  const sample = data.sample ? " · sample data" : "";
-  el.textContent = `Updated ${when.toLocaleString()}${sample}`;
-}
+/* ---------------- changes strip ---------------- */
 
-function apply() {
-  const q = document.getElementById("search").value.trim().toUpperCase();
-  const vf = document.getElementById("verdict-filter").value;
-  const sort = document.getElementById("sort").value;
-
-  let rows = allTickers.filter((t) => {
-    if (q && !(t.symbol || "").toUpperCase().includes(q)) return false;
-    if (vf !== "ALL" && t.verdict !== vf) return false;
-    return true;
-  });
-
-  const num = (v) => (typeof v === "number" ? v : -Infinity);
-  const cmp = {
-    "composite-desc": (a, b) => num(b.composite) - num(a.composite),
-    "composite-asc": (a, b) => num(a.composite) - num(b.composite),
-    "symbol-asc": (a, b) => (a.symbol || "").localeCompare(b.symbol || ""),
-    "change-desc": (a, b) => num(b.change_pct) - num(a.change_pct),
-    "change-asc": (a, b) => num(a.change_pct) - num(b.change_pct),
-  }[sort];
-  rows.sort(cmp);
-
-  render(rows);
-}
-
-function fmtPct(v) {
-  if (typeof v !== "number") return "—";
-  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
-}
-
-function fmtScore(v) {
-  return typeof v === "number" ? v.toFixed(2) : "—";
-}
-
-function render(rows) {
-  const container = document.getElementById("cards");
-  container.innerHTML = "";
-  if (!rows.length) {
-    container.innerHTML = '<p class="placeholder">No tickers match the current filter.</p>';
-    return;
-  }
-
-  for (const t of rows) {
-    const card = document.createElement("article");
-    card.className = "card";
-
-    if (t.error) {
-      card.classList.add("card-error");
-      card.innerHTML = `<div class="card-head"><span class="ticker">${esc(t.symbol)}</span>
-        <span class="badge err">ERROR</span></div><p class="err-msg">${esc(t.error)}</p>`;
-      container.appendChild(card);
-      continue;
-    }
-
-    const vclass = VERDICT_CLASS[t.verdict] || "neutral";
-    const changeClass = (t.change_pct || 0) >= 0 ? "up" : "down";
-
-    const flags = (t.flags || []).map((f) => `<span class="flag">${esc(f)}</span>`).join("");
-    const s = t.scores || {};
-
-    const sector = t.sector && t.sector !== "Unknown" ? esc(t.sector) : "";
-    const peerNote = (t.peers_in_sector || 0) > 0
-      ? `vs ${t.peers_in_sector} industry peers`
-      : "no peer data";
-    const history = t.history || {};
-    const funRows = (t.fundamentals || []).map((m) => {
-      const tone = m.tone || "neutral";
-      const benchTitle = m.sector_benchmark != null
-        ? `${m.benchmark_source === "sector" ? "sector" : "peer"} benchmark ${m.sector_benchmark}`
-        : "";
-      const word = m.word
-        ? `<span class="word ${tone}" title="${benchTitle}">${esc(m.word)}</span>`
-        : `<span class="word none">—</span>`;
-      const pts = history[m.key];
-      let labelCell = esc(m.label);
-      if (pts && pts.length > 1) {
-        const ck = `${t.symbol}:${m.key}`;
-        chartData[ck] = { points: pts, benchmark: m.sector_benchmark, label: m.label, unit: m.display };
-        labelCell = `<button class="chart-btn" data-ck="${ck}" title="Show history" aria-label="Show ${esc(m.label)} history">📈</button> ${esc(m.label)}`;
-      }
-      return `<tr><td>${labelCell}</td><td class="mval">${esc(m.display)}</td><td>${word}</td></tr>`;
-    }).join("");
-    const funBlock = (t.fundamentals || []).length
-      ? `<details>
-           <summary>Fundamentals (${peerNote})</summary>
-           <table class="fundamentals"><tbody>${funRows}</tbody></table>
-         </details>`
-      : "";
-
-    card.innerHTML = `
-      <div class="card-head">
-        <span class="ticker">${esc(t.symbol)}</span>
-        <span class="badge ${vclass}">${esc(t.verdict || "—")}</span>
-      </div>
-      ${sector ? `<div class="sector">${esc(t.company || "")}${t.company ? " · " : ""}${sector}</div>` : ""}
-      <div class="price-row">
-        <span class="price">${typeof t.price === "number" ? "$" + t.price.toFixed(2) : "—"}</span>
-        <span class="change ${changeClass}">${fmtPct(t.change_pct)}</span>
-        ${sparklineSvg(t.spark)}
-      </div>
-      ${earningsChip(t.next_earnings)}
-      <div class="composite">Composite <strong>${fmtScore(t.composite)}</strong>
-        <span class="coverage">coverage ${fmtScore(t.coverage)}</span></div>
-      <div class="subscores">
-        <span title="Fundamentals">F ${fmtScore(s.fundamentals)}</span>
-        <span title="Technicals">T ${fmtScore(s.technicals)}</span>
-        <span title="Sentiment">S ${fmtScore(s.sentiment)}</span>
-      </div>
-      ${flags ? `<div class="flags">${flags}</div>` : ""}
-      ${aiBlock(t.ai)}
-      ${funBlock}
-      <details>
-        <summary>Why? (${(t.reasons || []).length} reasons)</summary>
-        ${groupedReasons(t.reasons)}
-      </details>`;
-    container.appendChild(card);
-  }
-}
-
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
-// Tiny ~3-month price line next to the quote; colored by period direction.
-function sparklineSvg(closes) {
-  if (!Array.isArray(closes) || closes.length < 2) return "";
-  const W = 96, H = 28, n = closes.length;
-  let lo = Math.min(...closes), hi = Math.max(...closes);
-  if (lo === hi) { lo -= 1; hi += 1; }
-  const x = (i) => (i * W) / (n - 1);
-  const y = (v) => 2 + (1 - (v - lo) / (hi - lo)) * (H - 4);
-  const pts = closes.map((c, i) => `${x(i).toFixed(1)},${y(c).toFixed(1)}`).join(" ");
-  const up = closes[n - 1] >= closes[0];
-  const periodPct = ((closes[n - 1] / closes[0] - 1) * 100).toFixed(1);
-  return `<svg viewBox="0 0 ${W} ${H}" class="spark" role="img"
-    aria-label="3-month price trend ${periodPct}%"><title>~3 months: ${periodPct}%</title>
-    <polyline points="${pts}" fill="none" stroke="${up ? "var(--up)" : "var(--down)"}" stroke-width="1.5"/></svg>`;
-}
-
-// "Earnings in Nd" chip; highlighted when imminent.
-function earningsChip(dateStr) {
-  if (!dateStr) return "";
-  const days = Math.ceil((new Date(dateStr + "T00:00:00Z") - Date.now()) / 86400000);
-  if (isNaN(days) || days < 0 || days > 120) return "";
-  const label = days === 0 ? "Earnings today" : `Earnings in ${days}d`;
-  return `<div class="earnings ${days <= 7 ? "soon" : ""}" title="Next earnings: ${esc(dateStr)}">📅 ${label}</div>`;
-}
-
-// Pre-generated "Ask AI" buy/not-buy panel (no live call — see ai_summary.py).
-function aiBlock(ai) {
-  if (!ai || !ai.bull || !ai.bear) return "";
-  const src = ai.source === "deterministic" ? "rule-based summary" : `AI · ${esc(ai.source)}`;
-  return `<details class="ai">
-    <summary>🤖 Ask AI — why buy / why not</summary>
-    <div class="ai-body">
-      <p class="ai-bull"><span class="ai-tag up">Bull</span> ${esc(ai.bull)}</p>
-      <p class="ai-bear"><span class="ai-tag down">Bear</span> ${esc(ai.bear)}</p>
-      <p class="ai-src">${src} · grounded in screener data · not financial advice</p>
-    </div></details>`;
-}
-
-// "Why?" reasons grouped under dimension headers instead of [prefix] strings.
-function groupedReasons(reasons) {
-  const groups = {};
-  const order = [];
-  for (const r of reasons || []) {
-    const m = /^\[(\w+)\]\s*(.*)$/.exec(r);
-    const dim = m ? m[1] : "other";
-    const text = m ? m[2] : r;
-    if (!groups[dim]) { groups[dim] = []; order.push(dim); }
-    groups[dim].push(text);
-  }
-  return order.map((dim) =>
-    `<div class="reason-group"><h4>${esc(dim)}</h4>
-       <ul class="reasons">${groups[dim].map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`
-  ).join("");
-}
-
-// "What changed since the last run" strip.
 function renderChanges(list) {
   const el = document.getElementById("changes");
-  if (!el) return;
-  if (!Array.isArray(list)) return;          // older payloads: leave hidden
+  if (!Array.isArray(list)) { el.hidden = true; return; }
   if (!list.length) {
     el.innerHTML = `<span class="ch-title">Since last run</span><span class="tr-muted">no changes</span>`;
-    el.hidden = false;
-    return;
+    el.hidden = false; return;
   }
   const chip = (c) => {
     let cls = c.type;
@@ -298,69 +161,236 @@ function renderChanges(list) {
   el.hidden = false;
 }
 
-// Clicking a change chip filters the dashboard to that ticker.
+/* ---------------- filter + sort + cards ---------------- */
+
+function apply() {
+  const q = state.search.trim().toUpperCase();
+  let rows = state.tickers.filter((t) => {
+    if (q && !(t.symbol || "").toUpperCase().includes(q)) return false;
+    if (state.verdict !== "ALL" && t.verdict !== state.verdict) return false;
+    return true;
+  });
+  const n = (v) => (typeof v === "number" ? v : -Infinity);
+  const cmp = {
+    "composite-desc": (a, b) => n(b.composite) - n(a.composite),
+    "composite-asc": (a, b) => n(a.composite) - n(b.composite),
+    "symbol-asc": (a, b) => (a.symbol || "").localeCompare(b.symbol || ""),
+    "change-desc": (a, b) => n(b.change_pct) - n(a.change_pct),
+    "change-asc": (a, b) => n(a.change_pct) - n(b.change_pct),
+  }[state.sort];
+  rows.sort(cmp);
+  renderCards(rows);
+}
+
+function renderCards(rows) {
+  const c = document.getElementById("cards");
+  c.innerHTML = "";
+  if (!rows.length) { c.innerHTML = `<p class="status">No tickers match the filter.</p>`; return; }
+  for (const t of rows) c.appendChild(cardEl(t));
+}
+
+function cardEl(t) {
+  const card = document.createElement("article");
+  card.className = "card";
+  if (t.error) {
+    card.innerHTML = `<div class="card-head"><div><span class="ticker">${esc(t.symbol)}</span></div>
+      <span class="badge err">Error</span></div><div class="name">${esc(t.error)}</div>`;
+    return card;
+  }
+  const vcls = VCLASS[t.verdict] || "neutral";
+  card.classList.add(vcls);
+  const changeCls = (t.change_pct || 0) >= 0 ? "up" : "down";
+  const s = t.scores || {};
+  const ed = earningsDays(t.next_earnings);
+  const flags = (t.flags || []).slice(0, 3).map((f) => `<span class="flag">${esc(f.replace(/_/g, " "))}</span>`).join("");
+  const hasAi = t.ai && t.ai.bull;
+
+  card.innerHTML = `
+    <div class="card-head">
+      <div><span class="ticker">${esc(t.symbol)}</span>
+        <div class="name">${esc(t.company || "")}${t.company && t.sector && t.sector !== "Unknown" ? " · " : ""}${t.sector && t.sector !== "Unknown" ? esc(t.sector) : ""}</div>
+      </div>
+      <span class="badge ${vcls}">${esc(t.verdict || "—")}</span>
+    </div>
+    <div class="price-row">
+      <span class="price tabular">${fmtMoney(t.price)}</span>
+      <span class="change ${changeCls} tabular">${fmtPct(t.change_pct)}</span>
+      ${sparklineSvg(t.spark)}
+    </div>
+    <div class="meta-row">
+      <span class="composite-pill">Composite <strong>${fmtScore(t.composite)}</strong></span>
+      ${ed != null ? `<span class="earnings ${ed <= 7 ? "soon" : ""}">📅 ${ed === 0 ? "Earnings today" : "Earnings in " + ed + "d"}</span>` : ""}
+    </div>
+    <div class="bars">
+      ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals)}${scoreBar("S", s.sentiment)}
+    </div>
+    ${flags ? `<div class="flags">${flags}</div>` : ""}
+    <div class="card-cta">${hasAi ? `<span class="ai-hint">🤖 Ask AI</span>` : "<span></span>"}<span>Details →</span></div>`;
+
+  card.addEventListener("click", () => openDrawer(t.symbol));
+  return card;
+}
+
+/* ---------------- detail drawer ---------------- */
+
+function openDrawer(symbol) {
+  const t = state.tickers.find((x) => x.symbol === symbol);
+  if (!t || t.error) return;
+  const s = t.scores || {};
+  const vcls = VCLASS[t.verdict] || "neutral";
+  const changeCls = (t.change_pct || 0) >= 0 ? "up" : "down";
+
+  const ai = t.ai && t.ai.bull ? `<div class="section"><h3>Ask AI — why buy / why not</h3>
+      <div class="ai-card">
+        <p class="ai-bull"><span class="ai-tag up">Bull</span>${esc(t.ai.bull)}</p>
+        <p class="ai-bear"><span class="ai-tag down">Bear</span>${esc(t.ai.bear)}</p>
+        <p class="ai-src">${t.ai.source === "deterministic" ? "rule-based summary" : "AI · " + esc(t.ai.source)} · grounded in screener data · not financial advice</p>
+      </div></div>` : "";
+
+  const history = t.history || {};
+  const funRows = (t.fundamentals || []).map((m) => {
+    const tone = m.tone || "neutral";
+    const word = m.word ? `<span class="word ${tone}">${esc(m.word)}</span>` : `<span class="word none">—</span>`;
+    const h = history[m.key];
+    const spark = h && h.length > 1 ? sparklineSvg(h.map((p) => p[1]), { w: 60, h: 18 }) : "";
+    return `<tr><td>${esc(m.label)}</td><td class="mval tabular">${esc(m.display)}</td>
+      <td class="mspark">${spark}</td><td>${word}</td></tr>`;
+  }).join("");
+  const peerNote = (t.peers_in_sector || 0) > 0 ? `vs ${t.peers_in_sector} industry peers` : "no peer data";
+  const fundamentals = funRows ? `<div class="section"><h3>Fundamentals (${peerNote})</h3>
+      <table class="fundamentals"><tbody>${funRows}</tbody></table></div>` : "";
+
+  const reasons = groupedReasons(t.reasons);
+
+  const drawer = document.getElementById("detail");
+  drawer.innerHTML = `
+    <div class="drawer-head">
+      <div>
+        <h2>${esc(t.symbol)} <span class="badge ${vcls}">${esc(t.verdict || "—")}</span></h2>
+        <div class="name">${esc(t.company || "")}${t.sector && t.sector !== "Unknown" ? " · " + esc(t.sector) : ""}</div>
+        <div class="price-row"><span class="price tabular">${fmtMoney(t.price)}</span>
+          <span class="change ${changeCls} tabular">${fmtPct(t.change_pct)}</span></div>
+      </div>
+      <button class="close-btn" id="drawer-close" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="section"><h3>Price · ~3 months</h3><div class="chart-box"><canvas id="price-chart"></canvas></div></div>
+      <div class="section"><h3>Signal breakdown</h3><div class="bars">
+        ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals)}${scoreBar("S", s.sentiment)}
+        <div class="bar-row"><span>Σ</span><div class="bar-track"><div class="bar-fill ${(t.composite||0)>=0?"pos":"neg"}" style="${(t.composite||0)>=0?`left:50%;width:${Math.min(50,Math.abs(t.composite||0)*50)}%`:`right:50%;left:auto;width:${Math.min(50,Math.abs(t.composite||0)*50)}%`}"></div></div><span class="bar-val">${fmtScore(t.composite)}</span></div>
+      </div></div>
+      ${ai}
+      ${fundamentals}
+      <div class="section"><h3>Why?</h3>${reasons}</div>
+    </div>`;
+
+  document.getElementById("scrim").hidden = false;
+  drawer.hidden = false;
+  document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+  drawPriceChart(t);
+}
+
+function drawPriceChart(t) {
+  const canvas = document.getElementById("price-chart");
+  if (!canvas || !Array.isArray(t.spark) || t.spark.length < 2 || typeof Chart === "undefined") return;
+  const up = t.spark[t.spark.length - 1] >= t.spark[0];
+  const col = up ? getCss("--up") : getCss("--down");
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, col + "55");
+  grad.addColorStop(1, col + "00");
+  if (drawerChart) drawerChart.destroy();
+  drawerChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: t.spark.map((_, i) => i),
+      datasets: [{ data: t.spark, borderColor: col, backgroundColor: grad, fill: true,
+                   borderWidth: 2, pointRadius: 0, tension: 0.25 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { title: () => "", label: (c) => "$" + c.parsed.y.toFixed(2) } } },
+      scales: {
+        x: { display: false },
+        y: { position: "right", grid: { color: getCss("--border") },
+             ticks: { color: getCss("--muted"), callback: (v) => "$" + v } },
+      },
+    },
+  });
+}
+
+function getCss(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function groupedReasons(reasons) {
+  const groups = {}, order = [];
+  for (const r of reasons || []) {
+    const m = /^\[(\w+)\]\s*(.*)$/.exec(r);
+    const dim = m ? m[1] : "other", text = m ? m[2] : r;
+    if (!groups[dim]) { groups[dim] = []; order.push(dim); }
+    groups[dim].push(text);
+  }
+  if (!order.length) return `<p class="tr-muted">No reasons recorded.</p>`;
+  return order.map((dim) =>
+    `<div class="reason-group"><h4>${esc(dim)}</h4><ul class="reasons">${groups[dim].map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("");
+}
+
+function closeDrawer() {
+  document.getElementById("detail").hidden = true;
+  document.getElementById("scrim").hidden = true;
+  if (drawerChart) { drawerChart.destroy(); drawerChart = null; }
+}
+
+/* ---------------- watchlist add/remove (GitHub issue) ---------------- */
+
+function manage(action) {
+  const t = document.getElementById("manage-ticker").value.trim().toUpperCase();
+  if (!t) { document.getElementById("manage-ticker").focus(); return; }
+  const params = new URLSearchParams({
+    template: "watchlist.yml", title: `[watchlist] ${action} ${t}`,
+    action: action === "add" ? "Add" : "Remove", tickers: t,
+  });
+  window.open(`https://github.com/${REPO}/issues/new?${params}`, "_blank", "noopener");
+}
+
+/* ---------------- theme ---------------- */
+
+function initTheme() {
+  const saved = localStorage.getItem("theme");
+  if (saved) document.documentElement.dataset.theme = saved;
+}
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("theme", next);
+  if (drawerChart) drawerChart.update();
+}
+
+/* ---------------- wiring ---------------- */
+
+document.getElementById("search").addEventListener("input", (e) => { state.search = e.target.value; apply(); });
+document.getElementById("sort").addEventListener("change", (e) => { state.sort = e.target.value; apply(); });
+document.getElementById("verdict-pills").addEventListener("click", (e) => {
+  const pill = e.target.closest(".pill");
+  if (!pill) return;
+  state.verdict = pill.dataset.v;
+  document.querySelectorAll("#verdict-pills .pill").forEach((p) => p.classList.toggle("active", p === pill));
+  apply();
+});
 document.getElementById("changes").addEventListener("click", (e) => {
   const chip = e.target.closest(".ch-chip");
   if (!chip) return;
   const search = document.getElementById("search");
   search.value = search.value === chip.dataset.sym ? "" : chip.dataset.sym;
-  apply();
+  state.search = search.value; apply();
 });
-
-// Build a small SVG line chart of a metric's quarterly history.
-function chartSvg(data) {
-  const W = 300, H = 130, padL = 8, padR = 8, padT = 18, padB = 22;
-  const vals = data.points.map((p) => p[1]);
-  const ys = data.benchmark != null ? vals.concat([data.benchmark]) : vals;
-  let lo = Math.min(...ys), hi = Math.max(...ys);
-  if (lo === hi) { lo -= 1; hi += 1; }
-  const n = data.points.length;
-  const x = (i) => padL + (i * (W - padL - padR)) / (n - 1);
-  const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
-  const line = data.points.map((p, i) => `${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
-  const first = data.points[0][0], last = data.points[n - 1][0];
-  const bench = data.benchmark != null
-    ? `<line x1="${padL}" y1="${y(data.benchmark).toFixed(1)}" x2="${W - padR}" y2="${y(data.benchmark).toFixed(1)}"
-         stroke="#f1c40f" stroke-dasharray="4 3" stroke-width="1"/>
-       <text x="${W - padR}" y="${(y(data.benchmark) - 3).toFixed(1)}" class="c-bench" text-anchor="end">benchmark ${esc(data.benchmark)}</text>`
-    : "";
-  const lastPt = `<circle cx="${x(n - 1).toFixed(1)}" cy="${y(data.points[n - 1][1]).toFixed(1)}" r="2.5" fill="#4f8cff"/>`;
-  return `<svg viewBox="0 0 ${W} ${H}" class="chart-svg" role="img" aria-label="${esc(data.label)} history">
-    <text x="${padL}" y="12" class="c-title">${esc(data.label)} · last ${n} quarters</text>
-    <text x="${padL}" y="${padT - 4}" class="c-axis">${hi.toFixed(1)}</text>
-    <text x="${padL}" y="${H - padB + 12}" class="c-axis">${lo.toFixed(1)}</text>
-    ${bench}
-    <polyline points="${line}" fill="none" stroke="#4f8cff" stroke-width="1.5"/>
-    ${lastPt}
-    <text x="${padL}" y="${H - 4}" class="c-axis">${esc(first)}</text>
-    <text x="${W - padR}" y="${H - 4}" class="c-axis" text-anchor="end">${esc(last)}</text>
-  </svg>`;
-}
-
-// Expand/collapse a chart row beneath the clicked metric.
-document.getElementById("cards").addEventListener("click", (e) => {
-  const btn = e.target.closest(".chart-btn");
-  if (!btn) return;
-  const row = btn.closest("tr");
-  const next = row.nextElementSibling;
-  if (next && next.classList.contains("chart-row")) {
-    next.remove();
-    btn.classList.remove("open");
-    return;
-  }
-  const data = chartData[btn.dataset.ck];
-  if (!data) return;
-  const tr = document.createElement("tr");
-  tr.className = "chart-row";
-  tr.innerHTML = `<td colspan="3">${chartSvg(data)}</td>`;
-  row.after(tr);
-  btn.classList.add("open");
-});
-
-for (const id of ["search", "verdict-filter", "sort"]) {
-  document.getElementById(id).addEventListener("input", apply);
-}
 document.getElementById("add-btn").addEventListener("click", () => manage("add"));
 document.getElementById("remove-btn").addEventListener("click", () => manage("remove"));
+document.getElementById("scrim").addEventListener("click", closeDrawer);
+document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+
+initTheme();
 load();
-loadTrackRecord();

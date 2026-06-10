@@ -1,49 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stock Screener</title>
-  <!-- Bump ?v= when app.js/styles.css change so browsers fetch the new file
-       instead of a cached copy (GitHub Pages has no build step to hash names). -->
-  <link rel="stylesheet" href="styles.css?v=7" />
-</head>
-<body>
   <!--
     Served publicly by GitHub Pages. NEVER put API keys or secrets in this
-    folder. This page only fetches and renders data/latest.json, which the
-    pipeline produces in GitHub Actions.
+    folder. This page only fetches and renders data/*.json produced by the
+    pipeline. Chart.js is vendored locally (vendor/) — no external calls.
+    Bump ?v= when app.js/styles.css change so browsers skip the cached file.
   -->
-  <header>
-    <div class="title-row">
-      <h1>Personal Stock Screener</h1>
-      <span id="updated" class="updated"></span>
+  <link rel="stylesheet" href="styles.css?v=8" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Stock&nbsp;Screener</h1>
+        <p class="sub">decision-support · not financial advice</p>
+      </div>
     </div>
-    <p class="tagline">Decision-support dashboard — verdicts are a filter to investigate, not buy/sell instructions. Not financial advice.</p>
+    <div class="topbar-right">
+      <span id="updated" class="updated"></span>
+      <button id="theme-toggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme">◐</button>
+    </div>
   </header>
+
+  <section id="hero" class="hero" hidden></section>
 
   <section id="changes" class="changes" hidden></section>
 
-  <section id="track-record" class="track" hidden></section>
-
-  <section class="manage">
-    <input id="manage-ticker" type="text" placeholder="Ticker, e.g. NFLX" aria-label="Ticker to add or remove" />
-    <button id="add-btn" type="button">+ Add</button>
-    <button id="remove-btn" type="button" class="secondary">– Remove</button>
-    <span class="manage-hint">opens a GitHub issue; the Action updates the watchlist</span>
-  </section>
-
-  <section class="controls">
-    <input id="search" type="search" placeholder="Filter by ticker…" aria-label="Filter by ticker" />
-    <label>Verdict
-      <select id="verdict-filter">
-        <option value="ALL">All</option>
-        <option value="WATCH-BUY">Watch-Buy</option>
-        <option value="NEUTRAL">Neutral</option>
-        <option value="WATCH-SELL">Watch-Sell</option>
-      </select>
-    </label>
-    <label>Sort
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Search ticker…" aria-label="Search ticker" />
+    </div>
+    <div id="verdict-pills" class="pills" role="group" aria-label="Filter by verdict">
+      <button class="pill active" data-v="ALL">All</button>
+      <button class="pill" data-v="WATCH-BUY">Buy</button>
+      <button class="pill" data-v="NEUTRAL">Neutral</button>
+      <button class="pill" data-v="WATCH-SELL">Sell</button>
+    </div>
+    <label class="sort-wrap">Sort
       <select id="sort">
         <option value="composite-desc">Composite ↓</option>
         <option value="composite-asc">Composite ↑</option>
@@ -52,17 +50,24 @@
         <option value="change-asc">Day move ↑</option>
       </select>
     </label>
-  </section>
+    <div class="manage">
+      <input id="manage-ticker" type="text" placeholder="Ticker" aria-label="Ticker to add or remove" />
+      <button id="add-btn" type="button" class="btn-accent">+ Add</button>
+      <button id="remove-btn" type="button" class="btn-ghost">– Remove</button>
+    </div>
+  </div>
 
-  <main>
-    <p id="status" class="placeholder">Loading…</p>
-    <div id="cards" class="cards"></div>
-  </main>
+  <p id="status" class="status">Loading…</p>
+  <main id="cards" class="cards"></main>
+
+  <div id="scrim" class="scrim" hidden></div>
+  <aside id="detail" class="drawer" hidden aria-label="Stock detail"></aside>
 
   <footer>
-    <p>Refreshed on a schedule by GitHub Actions. Data source: Finnhub / FMP (computed locally).</p>
+    <p>Refreshed on a schedule by GitHub Actions · data: Finnhub / Yahoo (computed locally). Verdicts are a filter to investigate, not buy/sell instructions.</p>
   </footer>
 
-  <script src="app.js?v=7"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
