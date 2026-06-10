@@ -48,6 +48,49 @@ async function load() {
   }
 }
 
+async function loadTrackRecord() {
+  const el = document.getElementById("track-record");
+  try {
+    const resp = await fetch("data/track_record.json", { cache: "no-store" });
+    if (!resp.ok) return;
+    renderTrack(el, await resp.json());
+  } catch { /* track record is optional */ }
+}
+
+function pct(v) { return `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`; }
+
+function renderTrack(el, data) {
+  const horizons = data.horizons || [];
+  if (!horizons.length) return;
+  const parts = [];
+  for (const h of horizons) {
+    const hz = (data.by_horizon || {})[String(h)];
+    if (!hz) continue;
+    const base = hz.baseline_avg_return;
+    const chips = [];
+    for (const v of ["WATCH-BUY", "WATCH-SELL"]) {
+      const s = (hz.verdicts || {})[v];
+      if (!s || !s.n) continue;
+      const cls = v === "WATCH-BUY" ? "buy" : "sell";
+      if (!s.confident) {
+        chips.push(`<span class="tr-chip ${cls}">${v === "WATCH-BUY" ? "Buy" : "Sell"}: building (n=${s.n})</span>`);
+      } else {
+        const good = s.hit_rate >= 0.5;
+        chips.push(`<span class="tr-chip ${cls}" title="avg ${pct(s.avg_return)} vs basket ${base != null ? pct(base) : "—"}">` +
+          `${v === "WATCH-BUY" ? "Buy" : "Sell"}: <strong class="${good ? "tr-good" : "tr-bad"}">${Math.round(s.hit_rate * 100)}% hit</strong> · ${pct(s.avg_return)} (basket ${base != null ? pct(base) : "—"}) · n=${s.n}</span>`);
+      }
+    }
+    if (chips.length) parts.push(`<div class="tr-row"><span class="tr-h">${h}d</span>${chips.join("")}</div>`);
+  }
+  if (!parts.length) {
+    el.innerHTML = `<span class="tr-title">Track record</span> <span class="tr-muted">building — grading verdicts as horizons elapse</span>`;
+  } else {
+    el.innerHTML = `<span class="tr-title">Track record</span>${parts.join("")}` +
+      `<span class="tr-muted">forward return after verdict, vs holding the whole watchlist (“basket”)</span>`;
+  }
+  el.hidden = false;
+}
+
 function renderUpdated(data) {
   const el = document.getElementById("updated");
   if (!data.generated_at) return;
@@ -233,3 +276,4 @@ for (const id of ["search", "verdict-filter", "sort"]) {
 document.getElementById("add-btn").addEventListener("click", () => manage("add"));
 document.getElementById("remove-btn").addEventListener("click", () => manage("remove"));
 load();
+loadTrackRecord();

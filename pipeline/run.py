@@ -31,6 +31,7 @@ from pipeline.checks import alerts as alert_check
 from pipeline import scoring
 from pipeline import metrics
 from pipeline import peers
+from pipeline import track_record
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "config.yaml"
@@ -251,6 +252,8 @@ def main() -> None:
     write_outputs(payload)
     ok = sum(1 for r in payload["tickers"] if "error" not in r)
     print(f"Wrote docs/data/latest.json — {ok}/{payload['count']} tickers scored.")
+    # Grade past verdicts against real forward returns (best-effort).
+    track_record.update()
 
 
 if __name__ == "__main__":

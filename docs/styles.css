@@ -40,6 +40,27 @@ h1 { margin: 0.25rem 0; font-size: 1.5rem; }
   align-items: center;
   flex-wrap: wrap;
 }
+.track {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.8rem;
+  font-size: 0.82rem;
+}
+.tr-title { font-weight: 700; }
+.tr-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.tr-h { color: var(--muted); font-variant-numeric: tabular-nums; }
+.tr-chip { background: var(--panel-2); border-radius: 6px; padding: 0.15rem 0.5rem; }
+.tr-chip.buy { border-left: 3px solid var(--buy); }
+.tr-chip.sell { border-left: 3px solid var(--sell); }
+.tr-good { color: var(--buy); }
+.tr-bad { color: var(--sell); }
+.tr-muted { color: var(--muted); font-size: 0.76rem; }
+
 .manage {
   display: flex;
   gap: 0.5rem;

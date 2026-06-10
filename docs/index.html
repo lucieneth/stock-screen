@@ -6,7 +6,7 @@
   <title>Stock Screener</title>
   <!-- Bump ?v= when app.js/styles.css change so browsers fetch the new file
        instead of a cached copy (GitHub Pages has no build step to hash names). -->
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <!--
@@ -21,6 +21,8 @@
     </div>
     <p class="tagline">Decision-support dashboard — verdicts are a filter to investigate, not buy/sell instructions. Not financial advice.</p>
   </header>
+
+  <section id="track-record" class="track" hidden></section>
 
   <section class="manage">
     <input id="manage-ticker" type="text" placeholder="Ticker, e.g. NFLX" aria-label="Ticker to add or remove" />
@@ -59,6 +61,6 @@
     <p>Refreshed on a schedule by GitHub Actions. Data source: Finnhub / FMP (computed locally).</p>
   </footer>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
