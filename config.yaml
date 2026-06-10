@@ -41,7 +41,8 @@ thresholds:
     sma_slow: 200
   sentiment:
     lookback_days: 7
-    negative_spike: -0.5  # flag news-sentiment below this
+    negative_spike: -0.25  # flag when sentiment drops this far below the ticker's own baseline
+    deviation_gain: 2.5    # scales baseline-deviation into the -1..+1 score
 
 alerts:
   daily_move_pct: 5.0   # flag a daily move larger than X%

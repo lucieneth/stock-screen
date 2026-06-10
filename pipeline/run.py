@@ -32,6 +32,7 @@ from pipeline import scoring
 from pipeline import metrics
 from pipeline import peers
 from pipeline import track_record
+from pipeline import sentiment_baseline
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "config.yaml"
@@ -52,7 +53,8 @@ def _candle_count(ohlcv) -> int:
     return len(ohlcv.get("c", [])) if isinstance(ohlcv, dict) else 0
 
 
-def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
+def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True,
+                 sent_baseline: float | None = None) -> dict:
     """Fetch data + run the peer-independent checks for one ticker.
 
     Produces a partial record with technicals/sentiment/alerts and the raw
@@ -115,7 +117,8 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
     # Peer-independent checks now; fundamentals scoring waits for benchmarks.
     merged_fin = {**fin_fmp, **fin_finnhub}
     technicals = tech_check.check(raw.get("ohlcv", {}), thresholds.get("technicals", {}))
-    sentiment = sent_check.check(raw.get("sentiment", {}), raw.get("news", []), thresholds.get("sentiment", {}))
+    sentiment = sent_check.check(raw.get("sentiment", {}), raw.get("news", []),
+                                 thresholds.get("sentiment", {}), baseline=sent_baseline)
     alerts = alert_check.check(raw.get("quote", {}), merged_fin, cfg.get("alerts", {}))
 
     quote = raw.get("quote", {})
@@ -179,9 +182,14 @@ def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
     watchlist = cfg.get("watchlist", [])
     use_fmp = bool(os.environ.get("FMP_API_KEY"))
 
+    # Per-ticker sentiment baselines from committed snapshots (A3): sentiment is
+    # scored as deviation from a ticker's own typical level, not absolute VADER.
+    baselines = sentiment_baseline.load_baselines()
+
     def attempt(symbol: str) -> dict:
         try:
-            return assemble_one(symbol, cfg, use_fmp=use_fmp)
+            return assemble_one(symbol, cfg, use_fmp=use_fmp,
+                                sent_baseline=baselines.get(symbol))
         except fh.FinnhubError as exc:
             return {"symbol": symbol, "error": str(exc)}
 
