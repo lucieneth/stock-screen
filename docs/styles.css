@@ -83,6 +83,23 @@ h1 { margin: 0.25rem 0; font-size: 1.5rem; }
   padding: 0.1rem 0.4rem;
 }
 
+.ai summary { color: var(--accent); font-weight: 600; }
+.ai-body { margin-top: 0.4rem; }
+.ai-bull, .ai-bear { margin: 0.3rem 0; font-size: 0.86rem; }
+.ai-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.4rem;
+  border-radius: 5px;
+  margin-right: 0.35rem;
+}
+.ai-tag.up { background: rgba(46, 204, 113, 0.18); color: var(--buy); }
+.ai-tag.down { background: rgba(231, 76, 60, 0.18); color: var(--sell); }
+.ai-src { color: var(--muted); font-size: 0.72rem; margin: 0.3rem 0 0; }
+
 .reason-group h4 {
   margin: 0.5rem 0 0.1rem;
   font-size: 0.72rem;

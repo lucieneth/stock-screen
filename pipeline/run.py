@@ -34,6 +34,7 @@ from pipeline import peers
 from pipeline import track_record
 from pipeline import sentiment_baseline
 from pipeline import changes
+from pipeline import ai_summary
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "config.yaml"
@@ -280,6 +281,8 @@ def main() -> None:
     payload = run(cfg)
     # "What changed since the last run" — verdict flips, new flags, movers.
     payload["changes"] = changes.diff(previous, payload)
+    # Pre-generate the "Ask AI" buy/not-buy summaries (cached; best-effort).
+    ai_summary.annotate(payload["tickers"], pause=float(os.environ.get("AI_PAUSE", "4")))
     write_outputs(payload)
     ok = sum(1 for r in payload["tickers"] if "error" not in r)
     print(f"Wrote docs/data/latest.json — {ok}/{payload['count']} tickers scored.")

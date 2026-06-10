@@ -208,6 +208,7 @@ function render(rows) {
         <span title="Sentiment">S ${fmtScore(s.sentiment)}</span>
       </div>
       ${flags ? `<div class="flags">${flags}</div>` : ""}
+      ${aiBlock(t.ai)}
       ${funBlock}
       <details>
         <summary>Why? (${(t.reasons || []).length} reasons)</summary>
@@ -245,6 +246,19 @@ function earningsChip(dateStr) {
   if (isNaN(days) || days < 0 || days > 120) return "";
   const label = days === 0 ? "Earnings today" : `Earnings in ${days}d`;
   return `<div class="earnings ${days <= 7 ? "soon" : ""}" title="Next earnings: ${esc(dateStr)}">📅 ${label}</div>`;
+}
+
+// Pre-generated "Ask AI" buy/not-buy panel (no live call — see ai_summary.py).
+function aiBlock(ai) {
+  if (!ai || !ai.bull || !ai.bear) return "";
+  const src = ai.source === "deterministic" ? "rule-based summary" : `AI · ${esc(ai.source)}`;
+  return `<details class="ai">
+    <summary>🤖 Ask AI — why buy / why not</summary>
+    <div class="ai-body">
+      <p class="ai-bull"><span class="ai-tag up">Bull</span> ${esc(ai.bull)}</p>
+      <p class="ai-bear"><span class="ai-tag down">Bear</span> ${esc(ai.bear)}</p>
+      <p class="ai-src">${src} · grounded in screener data · not financial advice</p>
+    </div></details>`;
 }
 
 // "Why?" reasons grouped under dimension headers instead of [prefix] strings.
