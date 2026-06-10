@@ -11,7 +11,7 @@
     Bump ?v= when app.js/styles.css change so browsers skip the cached file.
   -->
   <link rel="preload" href="vendor/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=10" />
+  <link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
   <div class="bg" aria-hidden="true"><div class="blob"></div></div>
@@ -31,6 +31,8 @@
   </header>
 
   <div id="tape" class="tape" hidden><div class="tape-track" id="tape-track"></div></div>
+
+  <section id="brief" class="brief" hidden></section>
 
   <section id="hero" class="hero" hidden></section>
 
@@ -73,6 +75,6 @@
   </footer>
 
   <script src="vendor/chart.umd.min.js"></script>
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

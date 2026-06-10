@@ -25,6 +25,7 @@ async function load() {
     state.tickers = Array.isArray(data.tickers) ? data.tickers : [];
     setUpdated(data);
     renderTape();
+    renderBrief(data.briefing);
     renderChanges(data.changes);
     status.style.display = "none";
     apply();
@@ -60,6 +61,23 @@ function monogram(sym) {
   for (const ch of sym || "?") h = (h * 31 + ch.charCodeAt(0)) % 360;
   const h2 = (h + 50) % 360;
   return `<span class="mono-logo" style="background:linear-gradient(135deg,hsl(${h} 70% 48%),hsl(${h2} 75% 38%))" aria-hidden="true">${esc((sym || "?").slice(0, 2))}</span>`;
+}
+
+// Daily brief: plain-English summary + buy / sell chips (no neutrals).
+function renderBrief(brief) {
+  const el = document.getElementById("brief");
+  if (!brief || !brief.text) { el.hidden = true; return; }
+  const chips = (list, cls) => (list || []).map((p) =>
+    `<button class="brief-chip ${cls}" data-sym="${esc(p.symbol)}" title="${esc(p.line || "")}">${esc(p.symbol)}</button>`).join("");
+  const buys = brief.buy && brief.buy.length
+    ? `<div class="brief-row"><span class="brief-tag up">▲ Buy</span>${chips(brief.buy, "up")}</div>` : "";
+  const sells = brief.sell && brief.sell.length
+    ? `<div class="brief-row"><span class="brief-tag down">▼ Avoid / trim</span>${chips(brief.sell, "down")}</div>` : "";
+  el.innerHTML = `
+    <div class="brief-head"><span class="brief-icon">📋</span><h3>Today's brief</h3></div>
+    <p class="brief-text">${esc(brief.text)}</p>
+    ${buys}${sells}`;
+  el.hidden = false;
 }
 
 // Scrolling ticker tape (duplicated content for a seamless loop).
@@ -113,7 +131,11 @@ function sparklineSvg(series, opts = {}) {
     <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
 }
 
-function scoreBar(letter, v) {
+function scoreBar(letter, v, naLabel) {
+  if (naLabel) {   // dimension unavailable this run — don't fake a 0
+    return `<div class="bar-row"><span>${letter}</span>
+      <div class="bar-track"></div><span class="bar-val na">${esc(naLabel)}</span></div>`;
+  }
   const val = num(v) ?? 0;
   const w = Math.min(50, Math.abs(val) * 50);
   const side = val >= 0 ? "pos" : "neg";
@@ -121,6 +143,17 @@ function scoreBar(letter, v) {
   return `<div class="bar-row"><span>${letter}</span>
     <div class="bar-track"><div class="bar-fill ${side}" style="${style}"></div></div>
     <span class="bar-val">${fmtScore(v)}</span></div>`;
+}
+
+// Which dimensions actually produced a signal this run (for honest "n/a" labels).
+function dimStatus(t) {
+  const d = t.details || {};
+  const tech = d.technicals && Object.keys(d.technicals).length ? null : "n/a";
+  const sent = d.sentiment || {};
+  let s = null;
+  if (!sent.source || sent.source === "none") s = "n/a";
+  else if (sent.source === "vader_headlines" && sent.deviation === undefined) s = "building";
+  return { tech, sent: s };
 }
 
 function earningsDays(dateStr) {
@@ -250,6 +283,7 @@ function cardEl(t) {
     flags = `<span class="flag gap" title="These fields couldn't be fetched this run — see the run log">⚠ partial data: ${esc(t.missing.join(", "))}</span>` + flags;
   }
   const hasAi = t.ai && t.ai.bull;
+  const ds = dimStatus(t);
 
   card.innerHTML = `
     <div class="card-head">
@@ -269,7 +303,7 @@ function cardEl(t) {
       ${ed != null ? `<span class="earnings ${ed <= 7 ? "soon" : ""}">📅 ${ed === 0 ? "Earnings today" : "Earnings in " + ed + "d"}</span>` : ""}
     </div>
     <div class="bars">
-      ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals)}${scoreBar("S", s.sentiment)}
+      ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals, ds.tech)}${scoreBar("S", s.sentiment, ds.sent)}
     </div>
     ${flags ? `<div class="flags">${flags}</div>` : ""}
     <div class="card-cta">${hasAi ? `<span class="ai-hint">🤖 Ask AI</span>` : "<span></span>"}<span>Details →</span></div>`;
@@ -287,11 +321,12 @@ function openDrawer(symbol) {
   const vcls = VCLASS[t.verdict] || "neutral";
   const changeCls = (t.change_pct || 0) >= 0 ? "up" : "down";
 
-  const ai = t.ai && t.ai.bull ? `<div class="section"><h3>Ask AI — why buy / why not</h3>
+  const ai = t.ai && t.ai.bull ? `<div class="section"><h3>In plain English</h3>
       <div class="ai-card">
-        <p class="ai-bull"><span class="ai-tag up">Bull</span>${esc(t.ai.bull)}</p>
-        <p class="ai-bear"><span class="ai-tag down">Bear</span>${esc(t.ai.bear)}</p>
-        <p class="ai-src">${t.ai.source === "deterministic" ? "rule-based summary" : "AI · " + esc(t.ai.source)} · grounded in screener data · not financial advice</p>
+        ${t.ai.takeaway ? `<p class="ai-take">${esc(t.ai.takeaway)}</p>` : ""}
+        <p class="ai-bull"><span class="ai-tag up">Good</span>${esc(t.ai.bull)}</p>
+        <p class="ai-bear"><span class="ai-tag down">Risks</span>${esc(t.ai.bear)}</p>
+        <p class="ai-src">${t.ai.source === "deterministic" ? "auto-summary" : "AI · " + esc(t.ai.source)} · based on the data above · not financial advice</p>
       </div></div>` : "";
 
   const history = t.history || {};
@@ -323,7 +358,7 @@ function openDrawer(symbol) {
     <div class="drawer-body">
       <div class="section"><h3>Price · ~3 months</h3><div class="chart-box"><canvas id="price-chart"></canvas></div></div>
       <div class="section"><h3>Signal breakdown</h3><div class="bars">
-        ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals)}${scoreBar("S", s.sentiment)}
+        ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals, dimStatus(t).tech)}${scoreBar("S", s.sentiment, dimStatus(t).sent)}
         <div class="bar-row"><span>Σ</span><div class="bar-track"><div class="bar-fill ${(t.composite||0)>=0?"pos":"neg"}" style="${(t.composite||0)>=0?`left:50%;width:${Math.min(50,Math.abs(t.composite||0)*50)}%`:`right:50%;left:auto;width:${Math.min(50,Math.abs(t.composite||0)*50)}%`}"></div></div><span class="bar-val">${fmtScore(t.composite)}</span></div>
       </div></div>
       ${ai}
@@ -446,6 +481,10 @@ document.getElementById("scrim").addEventListener("click", closeDrawer);
 document.getElementById("tape").addEventListener("click", (e) => {
   const item = e.target.closest(".tape-item");
   if (item) openDrawer(item.dataset.sym);
+});
+document.getElementById("brief").addEventListener("click", (e) => {
+  const chip = e.target.closest(".brief-chip");
+  if (chip) openDrawer(chip.dataset.sym);
 });
 document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });

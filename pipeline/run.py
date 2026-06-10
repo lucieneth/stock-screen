@@ -35,6 +35,7 @@ from pipeline import track_record
 from pipeline import sentiment_baseline
 from pipeline import changes
 from pipeline import ai_summary
+from pipeline import briefing
 from pipeline import fetch_cache
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -121,12 +122,14 @@ def _resolve_ohlcv(symbol: str, prefetched: dict | None, use_fmp: bool, fc,
             except fmp.FMPError as exc:
                 sources["ohlcv_error"] += f" | fmp: {exc}"[:160]
     if "error" not in ohlcv:
-        fc.set(f"ohlcv:{symbol}", {"c": ohlcv.get("c") or []})
+        # Persist dates too so track_record can reuse this instead of re-hitting
+        # Yahoo (halves the request burst that triggers the 429).
+        fc.set(f"ohlcv:{symbol}", {"t": ohlcv.get("t") or [], "c": ohlcv.get("c") or []})
         return ohlcv
     stale = fc.get(f"ohlcv:{symbol}", TTL_OHLCV_STALE)
     if isinstance(stale, dict) and stale.get("c"):
         sources["ohlcv"] = "cache(stale)"
-        return {"s": "ok", "c": stale["c"]}
+        return {"s": "ok", "t": stale.get("t") or [], "c": stale["c"]}
     return ohlcv  # still the error dict
 
 
@@ -420,6 +423,12 @@ def main() -> None:
     # Pre-generate the "Ask AI" buy/not-buy summaries (cached; best-effort).
     print("generating AI summaries…", flush=True)
     ai_summary.annotate(payload["tickers"], pause=float(os.environ.get("AI_PAUSE", "4")))
+    # Daily brief: what changed / what to buy / what to sell (no neutrals).
+    print("writing daily brief…", flush=True)
+    try:
+        payload["briefing"] = briefing.build(payload["tickers"], payload.get("changes"))
+    except Exception as exc:
+        print(f"briefing: skipped ({exc})", flush=True)
     write_outputs(payload)
     ok = sum(1 for r in payload["tickers"] if "error" not in r)
     print(f"Wrote docs/data/latest.json — {ok}/{payload['count']} tickers scored.", flush=True)

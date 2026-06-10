@@ -48,15 +48,25 @@ def _load_snapshots() -> list[tuple[date, list[dict]]]:
     return out
 
 
-def _price_index(symbol: str) -> list[tuple[date, float]]:
-    """Sorted [(date, close)] from Yahoo (FMP fallback), or [] on failure."""
+FETCH_CACHE_PATH = REPO_ROOT / "cache" / "fetches.json"
+
+
+def _cached_ohlcv() -> dict:
+    """{symbol: {"t":[...], "c":[...]}} that the main run just persisted."""
     try:
-        ohlcv = yahoo.get_ohlcv(symbol, days=1700)
-    except yahoo.YahooError:
-        try:
-            ohlcv = fmp.get_ohlcv(symbol, days=1700)
-        except fmp.FMPError:
-            return []
+        raw = json.loads(FETCH_CACHE_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    out = {}
+    for key, ent in raw.items():
+        if key.startswith("ohlcv:") and isinstance(ent, dict):
+            v = ent.get("v") or {}
+            if v.get("t") and v.get("c"):
+                out[key.split(":", 1)[1]] = v
+    return out
+
+
+def _to_pairs(ohlcv: dict) -> list[tuple[date, float]]:
     pairs = []
     for ds, c in zip(ohlcv.get("t", []), ohlcv.get("c", [])):
         try:
@@ -64,6 +74,32 @@ def _price_index(symbol: str) -> list[tuple[date, float]]:
         except (ValueError, TypeError):
             continue
     return pairs
+
+
+def _make_price_index(cache: dict):
+    """Build a price_fetch that reuses the run's cached OHLCV before any network."""
+    def fetch(symbol: str) -> list[tuple[date, float]]:
+        if symbol in cache:
+            return _to_pairs(cache[symbol])
+        try:
+            return _to_pairs(yahoo.get_ohlcv(symbol, days=1700))
+        except yahoo.YahooError:
+            try:
+                return _to_pairs(fmp.get_ohlcv(symbol, days=1700))
+            except fmp.FMPError:
+                return []
+    return fetch
+
+
+def _price_index(symbol: str) -> list[tuple[date, float]]:
+    """Sorted [(date, close)] from Yahoo (FMP fallback), or [] on failure."""
+    try:
+        return _to_pairs(yahoo.get_ohlcv(symbol, days=1700))
+    except yahoo.YahooError:
+        try:
+            return _to_pairs(fmp.get_ohlcv(symbol, days=1700))
+        except fmp.FMPError:
+            return []
 
 
 def _close_on_or_after(index: list[tuple[date, float]], target: date) -> float | None:
@@ -84,12 +120,15 @@ def _forward_return(index, entry_date: date, horizon: int) -> float | None:
     return exit_ / entry - 1.0
 
 
-def evaluate(price_fetch=_price_index) -> dict:
+def evaluate(price_fetch=None) -> dict:
     snapshots = _load_snapshots()
     symbols = sorted({t["symbol"] for _, ts in snapshots for t in ts if "symbol" in t})
-    # Fetch price histories in parallel — Yahoo has no rate limit.
+    # Reuse the OHLCV the main run already fetched (cache/fetches.json) before
+    # hitting the network — this is what halves the Yahoo request burst.
+    if price_fetch is None:
+        price_fetch = _make_price_index(_cached_ohlcv())
     if symbols:
-        with ThreadPoolExecutor(max_workers=min(8, len(symbols))) as ex:
+        with ThreadPoolExecutor(max_workers=min(4, len(symbols))) as ex:
             indices = dict(zip(symbols, ex.map(price_fetch, symbols)))
     else:
         indices = {}

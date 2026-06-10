@@ -14,8 +14,8 @@ def _rec(**over):
         "reasons": ["[technicals] 12-1 momentum +44% (positive)"],
         "flags": ["high_pe"],
         "fundamentals": [
-            {"label": "ROE", "word": "strong", "tone": "good"},
-            {"label": "P/E", "word": "expensive", "tone": "bad"},
+            {"key": "roe", "label": "ROE", "word": "strong", "tone": "good"},
+            {"key": "pe", "label": "P/E", "word": "expensive", "tone": "bad"},
         ],
     }
     base.update(over)
@@ -24,11 +24,15 @@ def _rec(**over):
 
 class TestParse:
     def test_plain_json(self):
-        assert ai._parse('{"bull": "Good ROE.", "bear": "Pricey."}') == {"bull": "Good ROE.", "bear": "Pricey."}
+        out = ai._parse('{"takeaway": "Looks decent.", "bull": "Good ROE.", "bear": "Pricey."}')
+        assert out == {"takeaway": "Looks decent.", "bull": "Good ROE.", "bear": "Pricey."}
+
+    def test_takeaway_optional(self):
+        assert ai._parse('{"bull":"a","bear":"b"}') == {"bull": "a", "bear": "b", "takeaway": ""}
 
     def test_code_fenced_json(self):
         out = ai._parse('```json\n{"bull":"a","bear":"b"}\n```')
-        assert out == {"bull": "a", "bear": "b"}
+        assert out["bull"] == "a" and out["bear"] == "b"
 
     def test_surrounding_prose_tolerated(self):
         assert ai._parse('Here you go: {"bull":"x","bear":"y"} thanks')["bull"] == "x"
@@ -41,15 +45,16 @@ class TestParse:
 
 
 class TestDeterministic:
-    def test_cites_good_and_bad_labels_keeping_case(self):
+    def test_plain_english_good_and_bad(self):
         out = ai.deterministic(_rec())
         assert out["source"] == "deterministic"
-        assert "ROE strong" in out["bull"]      # casing preserved, not "roe"
-        assert "P/E expensive" in out["bear"]
+        assert "high returns on shareholder money" in out["bull"]   # ROE strong -> plain
+        assert "expensive for its earnings" in out["bear"]           # P/E expensive -> plain
 
-    def test_flags_surface_in_bear(self):
-        out = ai.deterministic(_rec())
-        assert "high pe" in out["bear"].lower()
+    def test_takeaway_reflects_verdict(self):
+        assert ai.deterministic(_rec())["takeaway"].startswith("Screening as a possible BUY")
+        assert "AVOID" in ai.deterministic(_rec(verdict="WATCH-SELL"))["takeaway"]
+        assert "mixed" in ai.deterministic(_rec(verdict="NEUTRAL"))["takeaway"].lower()
 
     def test_handles_no_signal_gracefully(self):
         out = ai.deterministic({"symbol": "X", "scores": {}, "fundamentals": [], "flags": []})
@@ -72,7 +77,7 @@ class TestProviderChain:
         monkeypatch.setattr(ai, "_groq", lambda p, s: '{"bull":"g-bull","bear":"g-bear"}')
         recs = [_rec()]
         ai.annotate(recs)
-        assert recs[0]["ai"] == {"bull": "g-bull", "bear": "g-bear", "source": "groq"}
+        assert recs[0]["ai"] == {"takeaway": "", "bull": "g-bull", "bear": "g-bear", "source": "groq"}
 
     def test_gemini_preferred_then_falls_back_to_groq_on_error(self, monkeypatch, tmp_path):
         monkeypatch.setenv("GEMINI_API_KEY", "x")

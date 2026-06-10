@@ -31,10 +31,14 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 TIMEOUT = 30
 
 _SYSTEM = (
-    "You are a neutral equity analyst. Using ONLY the facts provided, give a brief, "
-    "balanced view. Return STRICT JSON with exactly two keys, \"bull\" and \"bear\", "
-    "each 1-2 short plain-language sentences citing the given factors. Do not give "
-    "investment advice or price targets, and do not invent facts."
+    "You explain a stock to a busy everyday investor who is NOT a finance expert. "
+    "Using ONLY the facts provided, write in plain, friendly English — short sentences, "
+    "no jargon. If you must mention a metric, say what it means (e.g. 'profit margins are "
+    "strong' not 'net margin in top quartile'). Return STRICT JSON with exactly three keys: "
+    "\"takeaway\" (one sentence, the gist a beginner needs — is this screening as a possible "
+    "buy, a wait, or a pass, and the single biggest reason), \"bull\" (1-2 sentences: the "
+    "main reasons it looks good), \"bear\" (1-2 sentences: the main risks/why it might not). "
+    "Do not give financial advice or price targets, and do not invent facts."
 )
 
 
@@ -84,7 +88,7 @@ def _groq(prompt: str, session: requests.Session) -> str:
 
 
 def _parse(text: str) -> dict | None:
-    """Pull {"bull","bear"} out of a model response, tolerating code fences."""
+    """Pull {"takeaway","bull","bear"} out of a model response (fence-tolerant)."""
     t = text.strip()
     if t.startswith("```"):
         t = t.strip("`")
@@ -95,7 +99,10 @@ def _parse(text: str) -> dict | None:
         return None
     bull, bear = obj.get("bull"), obj.get("bear")
     if isinstance(bull, str) and isinstance(bear, str) and bull and bear:
-        return {"bull": bull.strip(), "bear": bear.strip()}
+        out = {"bull": bull.strip(), "bear": bear.strip()}
+        tk = obj.get("takeaway")
+        out["takeaway"] = tk.strip() if isinstance(tk, str) and tk.strip() else ""
+        return out
     return None
 
 
@@ -110,41 +117,60 @@ def _join(items: list[str]) -> str:
     return ", ".join(items[:-1]) + " and " + items[-1]
 
 
+# Plain-English phrasing for each metric's good/bad label.
+_PLAIN = {
+    ("pe", "cheap"): "the price looks cheap for its earnings",
+    ("pe", "expensive"): "the price looks expensive for its earnings",
+    ("pb", "cheap"): "cheap relative to assets", ("pb", "expensive"): "pricey relative to assets",
+    ("ps", "cheap"): "cheap relative to sales", ("ps", "expensive"): "pricey relative to sales",
+    ("gross_margin", "strong"): "strong gross margins", ("gross_margin", "weak"): "thin gross margins",
+    ("net_margin", "strong"): "strong profit margins", ("net_margin", "weak"): "thin profit margins",
+    ("roe", "strong"): "high returns on shareholder money", ("roe", "weak"): "low returns on shareholder money",
+    ("roa", "strong"): "uses its assets efficiently", ("roa", "weak"): "uses its assets inefficiently",
+    ("current_ratio", "strong"): "comfortable short-term finances", ("current_ratio", "weak"): "tight short-term finances",
+    ("debt_to_equity", "lean"): "low debt", ("debt_to_equity", "heavy"): "heavy debt",
+    ("rev_growth", "strong"): "fast revenue growth", ("rev_growth", "weak"): "slow revenue growth",
+}
+
+
+def _plain(m: dict) -> str:
+    return _PLAIN.get((m.get("key"), m.get("word")), f"{m.get('label')} {m.get('word')}")
+
+
 def deterministic(rec: dict) -> dict:
-    """Synthesize bull/bear from the screener's own labels — no LLM needed.
-
-    Kept short (a few strongest factors) so it reads like a quick take, and
-    metric names keep their casing (P/E, ROE) — no lower-casing.
-    """
+    """Plain-English bull/bear/takeaway from the screener's own labels — no LLM."""
     funds = rec.get("fundamentals") or []
-    good = [f"{m['label']} {m['word']}" for m in funds if m.get("tone") == "good"][:4]
-    bad = [f"{m['label']} {m['word']}" for m in funds if m.get("tone") == "bad"][:4]
+    good = [_plain(m) for m in funds if m.get("tone") == "good"][:3]
+    bad = [_plain(m) for m in funds if m.get("tone") == "bad"][:3]
     s = rec.get("scores") or {}
+    verdict = rec.get("verdict")
 
-    bull_bits = []
-    if good:
-        bull_bits.append(f"versus peers, {_join(good)}")
+    bull_bits = list(good)
     if (s.get("technicals") or 0) > 0.15:
-        bull_bits.append("price trend/momentum is positive")
+        bull_bits.append("the price trend is heading up")
     if (s.get("sentiment") or 0) > 0.15:
-        bull_bits.append("recent news runs better than usual")
+        bull_bits.append("recent news is better than usual")
 
-    bear_bits = []
-    if bad:
-        bear_bits.append(f"versus peers, {_join(bad)}")
+    bear_bits = list(bad)
     if (s.get("technicals") or 0) < -0.15:
-        bear_bits.append("price trend/momentum is negative")
+        bear_bits.append("the price trend is heading down")
     if (s.get("sentiment") or 0) < -0.15:
-        bear_bits.append("recent news runs worse than usual")
-    for f in rec.get("flags", []):
-        if f in ("high_pe", "high_leverage", "negative_fcf", "negative_earnings"):
-            bear_bits.append(f.replace("_", " "))
+        bear_bits.append("recent news is worse than usual")
 
-    bull = f"Bull case: {_join(bull_bits)}." if bull_bits else \
-        "Bull case: no clearly favourable factors stand out in the screened data."
-    bear = f"Bear case: {_join(bear_bits)}." if bear_bits else \
-        "Bear case: no clear red flags in the screened data, but valuation/timing still warrant a look."
-    return {"bull": bull, "bear": bear, "source": "deterministic"}
+    bull = ("On the plus side, " + _join(bull_bits) + ".") if bull_bits else \
+        "Nothing clearly stands out in its favour in the screened data."
+    bear = ("Watch out that " + _join(bear_bits) + ".") if bear_bits else \
+        "No obvious red flags, but always check valuation and timing yourself."
+
+    if verdict == "WATCH-BUY":
+        gist = good[0] if good else "it scores well overall"
+        takeaway = f"Screening as a possible BUY — mainly because {gist}."
+    elif verdict == "WATCH-SELL":
+        gist = bad[0] if bad else "its overall score is weak"
+        takeaway = f"Screening as one to AVOID/trim — mainly because {gist}."
+    else:
+        takeaway = "A mixed picture — worth watching, but no strong push either way."
+    return {"takeaway": takeaway, "bull": bull, "bear": bear, "source": "deterministic"}
 
 
 # --- orchestration ------------------------------------------------------------
@@ -159,22 +185,32 @@ def _signature(rec: dict) -> str:
     return hashlib.sha256(json.dumps(salient, sort_keys=True).encode()).hexdigest()[:16]
 
 
+def complete(prompt: str, session: requests.Session | None = None,
+             validate=None) -> tuple[str, str] | None:
+    """Raw LLM completion via Gemini -> Groq. Returns (text, source) or None.
+
+    `validate(text)` must return truthy to accept a response; if it returns
+    falsy (e.g. unparseable JSON), the next provider is tried. Shared by the
+    per-stock summaries and the daily briefing.
+    """
+    session = session or requests.Session()
+    validate = validate or (lambda t: bool(t and t.strip()))
+    for name, fn in (("gemini", _gemini), ("groq", _groq)):
+        if not os.environ.get(f"{name.upper()}_API_KEY"):
+            continue
+        try:
+            text = fn(prompt, session)
+        except (requests.RequestException, KeyError, IndexError, ValueError):
+            continue
+        if validate(text):
+            return text, name
+    return None
+
+
 def _generate(rec: dict, session: requests.Session) -> dict:
-    prompt = _prompt(rec)
-    if os.environ.get("GEMINI_API_KEY"):
-        try:
-            parsed = _parse(_gemini(prompt, session))
-            if parsed:
-                return {**parsed, "source": "gemini"}
-        except (requests.RequestException, KeyError, IndexError, ValueError):
-            pass
-    if os.environ.get("GROQ_API_KEY"):
-        try:
-            parsed = _parse(_groq(prompt, session))
-            if parsed:
-                return {**parsed, "source": "groq"}
-        except (requests.RequestException, KeyError, IndexError, ValueError):
-            pass
+    out = complete(_prompt(rec), session, validate=lambda t: _parse(t) is not None)
+    if out:
+        return {**_parse(out[0]), "source": out[1]}
     return deterministic(rec)
 
 
@@ -211,8 +247,8 @@ def annotate(records: list[dict], pause: float = 0.0, max_new: int | None = None
             continue
         sig = _signature(rec)
         cached = cache.get(rec["symbol"])
-        if cached and cached.get("sig") == sig:
-            rec["ai"] = {k: cached[k] for k in ("bull", "bear", "source")}
+        if cached and cached.get("sig") == sig and "takeaway" in cached:
+            rec["ai"] = {k: cached.get(k, "") for k in ("takeaway", "bull", "bear", "source")}
             continue
 
         # Spend the LLM budget first; afterwards (or on failure) use the

@@ -56,3 +56,21 @@ def test_sell_avg_return_sign(history):
     history(d, [{"symbol": "DROP", "verdict": "WATCH-SELL"}])
     res = tr.evaluate(price_fetch=lambda s: _index(d, -0.005))
     assert res["by_horizon"]["90"]["verdicts"]["WATCH-SELL"]["avg_return"] < 0
+
+
+def test_reuses_run_ohlcv_cache_no_network(history, tmp_path, monkeypatch):
+    """The main run's cached OHLCV is reused instead of re-fetching prices."""
+    import json
+    d = date.today() - timedelta(days=120)
+    history(d, [{"symbol": "WIN", "verdict": "WATCH-BUY"}])
+    # Simulate cache/fetches.json with WIN's dates+closes from the main run.
+    dates = [(d + timedelta(days=i)).isoformat() for i in range(150)]
+    closes = [100.0 * (1 + 0.003 * i) for i in range(150)]
+    cache_file = tmp_path / "fetches.json"
+    cache_file.write_text(json.dumps({"ohlcv:WIN": {"ts": "x", "v": {"t": dates, "c": closes}}}))
+    monkeypatch.setattr(tr, "FETCH_CACHE_PATH", cache_file)
+    # If anything tries the network, fail loudly.
+    monkeypatch.setattr(tr.yahoo, "get_ohlcv", lambda *a, **k: (_ for _ in ()).throw(AssertionError("hit network")))
+
+    res = tr.evaluate()   # price_fetch=None -> builds from cache
+    assert res["by_horizon"]["30"]["verdicts"]["WATCH-BUY"]["hit_rate"] == 1.0
