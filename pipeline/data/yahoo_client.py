@@ -15,6 +15,7 @@ from __future__ import annotations
 import sys
 import json
 import time
+import random
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -72,13 +73,17 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
     raise YahooError(f"{symbol}: failed after retries: {last_exc}")
 
 
-def get_many(symbols: list[str], days: int = 400, workers: int = 4) -> dict[str, dict]:
-    """Fetch OHLCV for many symbols in parallel (Yahoo has no rate limit).
+def get_many(symbols: list[str], days: int = 400, workers: int = 2,
+             jitter: float = 0.6) -> dict[str, dict]:
+    """Fetch OHLCV for many symbols, gently (Yahoo rate-limits datacenter IPs).
 
-    Returns {symbol: ohlcv_dict} where a failed fetch is {"error": "..."} so the
-    caller can degrade per-ticker rather than abort.
+    Small worker pool + per-request jitter avoids the burst-429 that otherwise
+    rate-limits the whole GitHub Actions runner. Returns {symbol: ohlcv_dict};
+    a failed fetch is {"error": "..."} so callers degrade per-ticker.
     """
     def one(sym: str):
+        if jitter:
+            time.sleep(random.uniform(0, jitter))
         try:
             return sym, get_ohlcv(sym, days=days)
         except YahooError as exc:

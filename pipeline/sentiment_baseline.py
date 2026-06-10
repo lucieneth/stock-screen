@@ -20,7 +20,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORY_DIR = REPO_ROOT / "docs" / "data" / "history"
 
-MIN_OBS = 5
+MIN_OBS = 3
 MAX_SNAPSHOTS = 30  # trailing window: ~6 weeks of weekday runs
 
 

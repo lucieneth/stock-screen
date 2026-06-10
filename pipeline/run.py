@@ -121,12 +121,14 @@ def _resolve_ohlcv(symbol: str, prefetched: dict | None, use_fmp: bool, fc,
             except fmp.FMPError as exc:
                 sources["ohlcv_error"] += f" | fmp: {exc}"[:160]
     if "error" not in ohlcv:
-        fc.set(f"ohlcv:{symbol}", {"c": ohlcv.get("c") or []})
+        # Persist dates too so track_record can reuse this instead of re-hitting
+        # Yahoo (halves the request burst that triggers the 429).
+        fc.set(f"ohlcv:{symbol}", {"t": ohlcv.get("t") or [], "c": ohlcv.get("c") or []})
         return ohlcv
     stale = fc.get(f"ohlcv:{symbol}", TTL_OHLCV_STALE)
     if isinstance(stale, dict) and stale.get("c"):
         sources["ohlcv"] = "cache(stale)"
-        return {"s": "ok", "c": stale["c"]}
+        return {"s": "ok", "t": stale.get("t") or [], "c": stale["c"]}
     return ohlcv  # still the error dict
 
 

@@ -113,7 +113,11 @@ function sparklineSvg(series, opts = {}) {
     <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
 }
 
-function scoreBar(letter, v) {
+function scoreBar(letter, v, naLabel) {
+  if (naLabel) {   // dimension unavailable this run — don't fake a 0
+    return `<div class="bar-row"><span>${letter}</span>
+      <div class="bar-track"></div><span class="bar-val na">${esc(naLabel)}</span></div>`;
+  }
   const val = num(v) ?? 0;
   const w = Math.min(50, Math.abs(val) * 50);
   const side = val >= 0 ? "pos" : "neg";
@@ -121,6 +125,17 @@ function scoreBar(letter, v) {
   return `<div class="bar-row"><span>${letter}</span>
     <div class="bar-track"><div class="bar-fill ${side}" style="${style}"></div></div>
     <span class="bar-val">${fmtScore(v)}</span></div>`;
+}
+
+// Which dimensions actually produced a signal this run (for honest "n/a" labels).
+function dimStatus(t) {
+  const d = t.details || {};
+  const tech = d.technicals && Object.keys(d.technicals).length ? null : "n/a";
+  const sent = d.sentiment || {};
+  let s = null;
+  if (!sent.source || sent.source === "none") s = "n/a";
+  else if (sent.source === "vader_headlines" && sent.deviation === undefined) s = "building";
+  return { tech, sent: s };
 }
 
 function earningsDays(dateStr) {
@@ -250,6 +265,7 @@ function cardEl(t) {
     flags = `<span class="flag gap" title="These fields couldn't be fetched this run — see the run log">⚠ partial data: ${esc(t.missing.join(", "))}</span>` + flags;
   }
   const hasAi = t.ai && t.ai.bull;
+  const ds = dimStatus(t);
 
   card.innerHTML = `
     <div class="card-head">
@@ -269,7 +285,7 @@ function cardEl(t) {
       ${ed != null ? `<span class="earnings ${ed <= 7 ? "soon" : ""}">📅 ${ed === 0 ? "Earnings today" : "Earnings in " + ed + "d"}</span>` : ""}
     </div>
     <div class="bars">
-      ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals)}${scoreBar("S", s.sentiment)}
+      ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals, ds.tech)}${scoreBar("S", s.sentiment, ds.sent)}
     </div>
     ${flags ? `<div class="flags">${flags}</div>` : ""}
     <div class="card-cta">${hasAi ? `<span class="ai-hint">🤖 Ask AI</span>` : "<span></span>"}<span>Details →</span></div>`;
@@ -323,7 +339,7 @@ function openDrawer(symbol) {
     <div class="drawer-body">
       <div class="section"><h3>Price · ~3 months</h3><div class="chart-box"><canvas id="price-chart"></canvas></div></div>
       <div class="section"><h3>Signal breakdown</h3><div class="bars">
-        ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals)}${scoreBar("S", s.sentiment)}
+        ${scoreBar("F", s.fundamentals)}${scoreBar("T", s.technicals, dimStatus(t).tech)}${scoreBar("S", s.sentiment, dimStatus(t).sent)}
         <div class="bar-row"><span>Σ</span><div class="bar-track"><div class="bar-fill ${(t.composite||0)>=0?"pos":"neg"}" style="${(t.composite||0)>=0?`left:50%;width:${Math.min(50,Math.abs(t.composite||0)*50)}%`:`right:50%;left:auto;width:${Math.min(50,Math.abs(t.composite||0)*50)}%`}"></div></div><span class="bar-val">${fmtScore(t.composite)}</span></div>
       </div></div>
       ${ai}

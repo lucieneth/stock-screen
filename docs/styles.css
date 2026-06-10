@@ -388,3 +388,5 @@ footer p { color: var(--muted); font-size: 0.78rem; }
   * { animation: none !important; transition: none !important; }
   .tape-track { animation: none !important; }
 }
+
+.bar-val.na { color: var(--muted); font-size: 0.68rem; font-style: italic; }
