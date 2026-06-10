@@ -24,6 +24,7 @@ async function load() {
     const data = await resp.json();
     state.tickers = Array.isArray(data.tickers) ? data.tickers : [];
     setUpdated(data);
+    renderTape();
     renderChanges(data.changes);
     status.style.display = "none";
     apply();
@@ -52,6 +53,43 @@ const fmtPct = (v) => (typeof v === "number" ? `${v >= 0 ? "+" : ""}${v.toFixed(
 const fmtScore = (v) => (typeof v === "number" ? v.toFixed(2) : "—");
 const fmtMoney = (v) => (typeof v === "number" ? "$" + v.toFixed(2) : "—");
 const pct = (v) => `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`;
+
+// Deterministic gradient monogram per ticker (no external logo service).
+function monogram(sym) {
+  let h = 0;
+  for (const ch of sym || "?") h = (h * 31 + ch.charCodeAt(0)) % 360;
+  const h2 = (h + 50) % 360;
+  return `<span class="mono-logo" style="background:linear-gradient(135deg,hsl(${h} 70% 48%),hsl(${h2} 75% 38%))" aria-hidden="true">${esc((sym || "?").slice(0, 2))}</span>`;
+}
+
+// Scrolling ticker tape (duplicated content for a seamless loop).
+function renderTape() {
+  const tape = document.getElementById("tape");
+  const track = document.getElementById("tape-track");
+  const live = state.tickers.filter((t) => !t.error && typeof t.price === "number");
+  if (live.length < 2) { tape.hidden = true; return; }
+  const item = (t) => {
+    const cls = (t.change_pct || 0) >= 0 ? "up" : "down";
+    return `<span class="tape-item" data-sym="${esc(t.symbol)}"><span class="ts">${esc(t.symbol)}</span>` +
+      `<span class="tp tabular">${fmtMoney(t.price)}</span>` +
+      `<span class="tc ${cls} tabular">${fmtPct(t.change_pct)}</span></span>`;
+  };
+  const half = live.map(item).join("");
+  track.innerHTML = half + half;   // two copies -> translateX(-50%) loops cleanly
+  tape.hidden = false;
+}
+
+// Count numbers up on first paint (subtle, respects reduced motion).
+function countUp(el, target, ms = 700) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = target; return; }
+  const t0 = performance.now();
+  const tick = (now) => {
+    const p = Math.min(1, (now - t0) / ms);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 
 function setUpdated(data) {
   const el = document.getElementById("updated");
@@ -107,13 +145,14 @@ function renderHero(track) {
       <h3>${total} stocks screened</h3>
       <div class="dist-bar">${seg("WATCH-BUY", "buy")}${seg("NEUTRAL", "neutral")}${seg("WATCH-SELL", "sell")}</div>
       <div class="dist-legend">
-        <div><span class="dot buy"></span>Watch-Buy<br><span class="n">${counts["WATCH-BUY"]}</span></div>
-        <div><span class="dot neutral"></span>Neutral<br><span class="n">${counts["NEUTRAL"]}</span></div>
-        <div><span class="dot sell"></span>Watch-Sell<br><span class="n">${counts["WATCH-SELL"]}</span></div>
+        <div><span class="dot buy"></span>Watch-Buy<br><span class="n" data-count="${counts["WATCH-BUY"]}">0</span></div>
+        <div><span class="dot neutral"></span>Neutral<br><span class="n" data-count="${counts["NEUTRAL"]}">0</span></div>
+        <div><span class="dot sell"></span>Watch-Sell<br><span class="n" data-count="${counts["WATCH-SELL"]}">0</span></div>
       </div>
     </div>
     <div class="hero-card"><h3>Track record</h3>${trackHtml(track)}</div>`;
   el.hidden = false;
+  el.querySelectorAll(".n[data-count]").forEach((n) => countUp(n, Number(n.dataset.count)));
 }
 
 function trackHtml(track) {
@@ -186,7 +225,11 @@ function renderCards(rows) {
   const c = document.getElementById("cards");
   c.innerHTML = "";
   if (!rows.length) { c.innerHTML = `<p class="status">No tickers match the filter.</p>`; return; }
-  for (const t of rows) c.appendChild(cardEl(t));
+  rows.forEach((t, i) => {
+    const el = cardEl(t);
+    el.style.animationDelay = `${Math.min(i * 45, 450)}ms`;   // staggered entrance
+    c.appendChild(el);
+  });
 }
 
 function cardEl(t) {
@@ -210,9 +253,10 @@ function cardEl(t) {
 
   card.innerHTML = `
     <div class="card-head">
-      <div><span class="ticker">${esc(t.symbol)}</span>
+      <div class="head-id">${monogram(t.symbol)}<div>
+        <span class="ticker">${esc(t.symbol)}</span>
         <div class="name">${esc(t.company || "")}${t.company && t.sector && t.sector !== "Unknown" ? " · " : ""}${t.sector && t.sector !== "Unknown" ? esc(t.sector) : ""}</div>
-      </div>
+      </div></div>
       <span class="badge ${vcls}">${esc(t.verdict || "—")}</span>
     </div>
     <div class="price-row">
@@ -269,7 +313,7 @@ function openDrawer(symbol) {
   drawer.innerHTML = `
     <div class="drawer-head">
       <div>
-        <h2>${esc(t.symbol)} <span class="badge ${vcls}">${esc(t.verdict || "—")}</span></h2>
+        <h2>${monogram(t.symbol)}${esc(t.symbol)} <span class="badge ${vcls}">${esc(t.verdict || "—")}</span></h2>
         <div class="name">${esc(t.company || "")}${t.sector && t.sector !== "Unknown" ? " · " + esc(t.sector) : ""}</div>
         <div class="price-row"><span class="price tabular">${fmtMoney(t.price)}</span>
           <span class="change ${changeCls} tabular">${fmtPct(t.change_pct)}</span></div>
@@ -303,8 +347,15 @@ function drawPriceChart(t) {
   grad.addColorStop(0, col + "55");
   grad.addColorStop(1, col + "00");
   if (drawerChart) drawerChart.destroy();
+  // Soft neon glow under the price line.
+  const glow = {
+    id: "glow",
+    beforeDatasetsDraw(c) { c.ctx.save(); c.ctx.shadowColor = col; c.ctx.shadowBlur = 14; },
+    afterDatasetsDraw(c) { c.ctx.restore(); },
+  };
   drawerChart = new Chart(ctx, {
     type: "line",
+    plugins: [glow],
     data: {
       labels: t.spark.map((_, i) => i),
       datasets: [{ data: t.spark, borderColor: col, backgroundColor: grad, fill: true,
@@ -392,6 +443,10 @@ document.getElementById("changes").addEventListener("click", (e) => {
 document.getElementById("add-btn").addEventListener("click", () => manage("add"));
 document.getElementById("remove-btn").addEventListener("click", () => manage("remove"));
 document.getElementById("scrim").addEventListener("click", closeDrawer);
+document.getElementById("tape").addEventListener("click", (e) => {
+  const item = e.target.closest(".tape-item");
+  if (item) openDrawer(item.dataset.sym);
+});
 document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
 

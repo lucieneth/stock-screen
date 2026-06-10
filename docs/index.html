@@ -10,9 +10,12 @@
     pipeline. Chart.js is vendored locally (vendor/) — no external calls.
     Bump ?v= when app.js/styles.css change so browsers skip the cached file.
   -->
-  <link rel="stylesheet" href="styles.css?v=9" />
+  <link rel="preload" href="vendor/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
+  <div class="bg" aria-hidden="true"><div class="blob"></div></div>
+  <div class="grain" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand">
       <span class="logo" aria-hidden="true"></span>
@@ -26,6 +29,8 @@
       <button id="theme-toggle" class="icon-btn" aria-label="Toggle light/dark theme" title="Toggle theme">◐</button>
     </div>
   </header>
+
+  <div id="tape" class="tape" hidden><div class="tape-track" id="tape-track"></div></div>
 
   <section id="hero" class="hero" hidden></section>
 
@@ -68,6 +73,6 @@
   </footer>
 
   <script src="vendor/chart.umd.min.js"></script>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
