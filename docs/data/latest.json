@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-10T21:45:48.499959+00:00",
+  "generated_at": "2026-06-10T22:16:41.256659+00:00",
   "count": 19,
   "tickers": [
     {
@@ -88,10 +88,10 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 247,
-          "raw": 0.319,
+          "stories": 246,
+          "raw": 0.32,
           "baseline": 0.349,
-          "deviation": -0.03
+          "deviation": -0.029
         }
       },
       "history": {
@@ -557,12 +557,12 @@
       ],
       "peers_in_sector": 11,
       "verdict": "NEUTRAL",
-      "composite": 0.174,
+      "composite": 0.175,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.0,
         "technicals": 0.55,
-        "sentiment": -0.074
+        "sentiment": -0.072
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -579,12 +579,13 @@
         "[technicals] SMA50 (283.95) above SMA200 (266.22) \u2014 uptrend",
         "[technicals] RSI 44 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.32 vs own baseline +0.35 (deviation -0.03, 247 stories: 162+ / 49-)"
+        "[sentiment] Headline sentiment +0.32 vs own baseline +0.35 (deviation -0.03, 246 stories: 161+ / 49-)"
       ],
       "ai": {
-        "bull": "AAPL's strong gross margin, net margin, ROE, and ROA compared to peers are positives, and its 12-1 momentum and uptrend indicated by SMA50 above SMA200 also support a bullish view.",
-        "bear": "AAPL's expensive P/B and P/S ratios, weak current ratio, heavy debt-to-equity, and weak revenue growth YoY compared to peers are concerns that weigh against a bullish outlook.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, the price looks cheap for its earnings, strong gross margins, strong profit margins and the price trend is heading up.",
+        "bear": "Watch out that pricey relative to assets, pricey relative to sales and tight short-term finances.",
+        "source": "deterministic"
       }
     },
     {
@@ -674,9 +675,9 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 250,
-          "raw": 0.299,
+          "raw": 0.296,
           "baseline": 0.283,
-          "deviation": 0.016
+          "deviation": 0.013
         }
       },
       "history": {
@@ -1142,12 +1143,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": -0.077,
+      "composite": -0.079,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.333,
         "technicals": -0.629,
-        "sentiment": 0.039
+        "sentiment": 0.032
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -1163,12 +1164,13 @@
         "[technicals] SMA50 (410.97) below SMA200 (454.86) \u2014 downtrend",
         "[technicals] RSI 39 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.30 vs own baseline +0.28 (deviation +0.02, 250 stories: 167+ / 60-)"
+        "[sentiment] Headline sentiment +0.30 vs own baseline +0.28 (deviation +0.01, 250 stories: 167+ / 60-)"
       ],
       "ai": {
-        "bull": "Microsoft's fundamentals appear strong with cheap P/E, P/B, and P/S ratios, as well as strong net margin, ROE, and ROA. Additionally, its RSI is neutral at 39.",
-        "bear": "The company's gross margin is weak, debt-to-equity ratio is heavy, and revenue growth is lagging behind peers, with technical indicators also showing a downtrend and negative momentum.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, the price looks cheap for its earnings, cheap relative to assets and cheap relative to sales.",
+        "bear": "Watch out that thin gross margins, heavy debt, slow revenue growth and the price trend is heading down.",
+        "source": "deterministic"
       }
     },
     {
@@ -1257,7 +1259,7 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 248,
+          "stories": 247,
           "raw": 0.301,
           "baseline": 0.311,
           "deviation": -0.01
@@ -1731,7 +1733,7 @@
       "scores": {
         "fundamentals": 0.111,
         "technicals": 0.55,
-        "sentiment": -0.025
+        "sentiment": -0.024
       },
       "reasons": [
         "[fundamentals] Net margin strong vs peers",
@@ -1747,12 +1749,13 @@
         "[technicals] SMA50 (359.61) above SMA200 (306.44) \u2014 uptrend",
         "[technicals] RSI 40 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.30 vs own baseline +0.31 (deviation -0.01, 248 stories: 165+ / 54-)"
+        "[sentiment] Headline sentiment +0.30 vs own baseline +0.31 (deviation -0.01, 247 stories: 163+ / 53-)"
       ],
       "ai": {
-        "bull": "GOOGL's strong net margin, ROE, and ROA, along with its lean debt-to-equity ratio and strong revenue growth, are positives. Its technicals also indicate an uptrend, with a 12-1 momentum of +117% and SMA50 above SMA200.",
-        "bear": "GOOGL's valuation appears expensive, with a high P/B and P/S ratio compared to peers, and its gross margin and current ratio are weak. Additionally, its RSI is neutral at 40, which may indicate a potential pause in the uptrend.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, strong profit margins, high returns on shareholder money, uses its assets efficiently and the price trend is heading up.",
+        "bear": "Watch out that pricey relative to assets, pricey relative to sales and thin gross margins.",
+        "source": "deterministic"
       }
     },
     {
@@ -1842,9 +1845,9 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 249,
-          "raw": 0.42,
+          "raw": 0.412,
           "baseline": 0.356,
-          "deviation": 0.063
+          "deviation": 0.056
         }
       },
       "history": {
@@ -2310,12 +2313,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "WATCH-BUY",
-      "composite": 0.355,
+      "composite": 0.351,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.4,
         "technicals": 0.445,
-        "sentiment": 0.158
+        "sentiment": 0.14
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -2332,12 +2335,13 @@
         "[technicals] SMA50 (253.55) above SMA200 (232.39) \u2014 uptrend",
         "[technicals] RSI 32 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.42 vs own baseline +0.36 (deviation +0.06, 249 stories: 187+ / 45-)"
+        "[sentiment] Headline sentiment +0.41 vs own baseline +0.36 (deviation +0.06, 249 stories: 186+ / 46-)"
       ],
       "ai": {
-        "bull": "Amazon's strong fundamentals, including a cheap P/E ratio, strong gross and net margins, and high ROE and ROA, support a positive outlook. Its technicals also indicate an uptrend, with a 12-1 momentum of +22% and SMA50 above SMA200.",
-        "bear": "However, the company's P/B and P/S ratios are expensive compared to peers, and its current ratio is weak, which could be a concern. Additionally, a high debt/equity ratio is not present, but the current ratio weakness may indicate liquidity issues.",
-        "source": "groq"
+        "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
+        "bull": "On the plus side, the price looks cheap for its earnings, strong gross margins, strong profit margins and the price trend is heading up.",
+        "bear": "Watch out that pricey relative to assets, pricey relative to sales and tight short-term finances.",
+        "source": "deterministic"
       }
     },
     {
@@ -2427,9 +2431,9 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 250,
-          "raw": 0.277,
+          "raw": 0.263,
           "baseline": 0.3,
-          "deviation": -0.024
+          "deviation": -0.038
         }
       },
       "history": {
@@ -2895,12 +2899,12 @@
       ],
       "peers_in_sector": 11,
       "verdict": "WATCH-BUY",
-      "composite": 0.489,
+      "composite": 0.48,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.778,
         "technicals": 0.55,
-        "sentiment": -0.059
+        "sentiment": -0.094
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -2916,12 +2920,13 @@
         "[technicals] SMA50 (205.71) above SMA200 (189.02) \u2014 uptrend",
         "[technicals] RSI 41 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.28 vs own baseline +0.30 (deviation -0.02, 250 stories: 157+ / 57-)"
+        "[sentiment] Headline sentiment +0.26 vs own baseline +0.30 (deviation -0.04, 250 stories: 152+ / 60-)"
       ],
       "ai": {
-        "bull": "NVIDIA's strong fundamentals, including low P/E ratio, high gross and net margins, and robust return on equity and assets, support a positive outlook. Additionally, its technical indicators, such as 12-1 momentum and SMA50 above SMA200, suggest an uptrend.",
-        "bear": "The company's price-to-book ratio is expensive compared to peers, which could be a concern. Additionally, the neutral RSI reading of 41 and negative sentiment score may indicate potential caution.",
-        "source": "groq"
+        "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
+        "bull": "On the plus side, the price looks cheap for its earnings, strong gross margins, strong profit margins and the price trend is heading up.",
+        "bear": "Watch out that pricey relative to assets.",
+        "source": "deterministic"
       }
     },
     {
@@ -3011,9 +3016,9 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 247,
-          "raw": 0.293,
-          "baseline": 0.274,
-          "deviation": 0.019
+          "raw": 0.288,
+          "baseline": 0.273,
+          "deviation": 0.016
         }
       },
       "history": {
@@ -3479,12 +3484,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": 0.011,
+      "composite": 0.009,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.556,
         "technicals": -0.639,
-        "sentiment": 0.047
+        "sentiment": 0.039
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -3500,12 +3505,13 @@
         "[technicals] SMA50 (622.15) below SMA200 (659.95) \u2014 downtrend",
         "[technicals] RSI 36 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.29 vs own baseline +0.27 (deviation +0.02, 247 stories: 163+ / 55-)"
+        "[sentiment] Headline sentiment +0.29 vs own baseline +0.27 (deviation +0.02, 247 stories: 161+ / 57-)"
       ],
       "ai": {
-        "bull": "META's fundamentals are strong, with cheap P/E and P/B ratios, high gross and net margins, and strong ROE and ROA, as well as robust revenue growth. Its strong financials could support the stock.",
-        "bear": "META's technical indicators are negative, with a downtrend and negative momentum, and its current ratio is weak, while its P/S ratio is expensive, which could weigh on the stock.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, the price looks cheap for its earnings, cheap relative to assets and strong gross margins.",
+        "bear": "Watch out that pricey relative to sales, tight short-term finances and the price trend is heading down.",
+        "source": "deterministic"
       }
     },
     {
@@ -3594,10 +3600,10 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 244,
-          "raw": 0.27,
-          "baseline": 0.265,
-          "deviation": 0.005
+          "stories": 243,
+          "raw": 0.274,
+          "baseline": 0.263,
+          "deviation": 0.011
         }
       },
       "history": {
@@ -4063,12 +4069,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": 0.066,
+      "composite": 0.07,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.2,
         "technicals": -0.05,
-        "sentiment": 0.013
+        "sentiment": 0.029
       },
       "reasons": [
         "[fundamentals] Gross margin strong vs peers",
@@ -4085,12 +4091,13 @@
         "[technicals] SMA50 (397.25) below SMA200 (415.16) \u2014 downtrend",
         "[technicals] RSI 39 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.27 vs own baseline +0.27 (deviation +0.01, 244 stories: 158+ / 56-)"
+        "[sentiment] Headline sentiment +0.27 vs own baseline +0.26 (deviation +0.01, 243 stories: 158+ / 55-)"
       ],
       "ai": {
-        "bull": "Tesla's strong gross margin, net margin, ROE, ROA, and current ratio, along with its lean debt-to-equity ratio, are positives. Its 12-1 momentum is also up 33%, a positive technical indicator.",
-        "bear": "The stock's P/E, P/B, and P/S ratios are expensive compared to its sector and peers, and its revenue growth is weak year-over-year. The SMA50 is also below the SMA200, indicating a downtrend.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, strong gross margins, strong profit margins and high returns on shareholder money.",
+        "bear": "Watch out that the price looks expensive for its earnings, pricey relative to assets and pricey relative to sales.",
+        "source": "deterministic"
       }
     },
     {
@@ -4110,8 +4117,8 @@
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 136,
-          "raw": 0.425
+          "stories": 140,
+          "raw": 0.437
         }
       },
       "history": {
@@ -4582,12 +4589,13 @@
         "[fundamentals] Net margin weak vs peers",
         "[fundamentals] Current ratio weak vs peers",
         "[technicals] technicals: unavailable (DELL: failed after retries: HTTP 429)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.43 over 136 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.44 over 140 stories)"
       ],
       "ai": {
-        "bull": "Dell's strong ROE and ROA, along with its lean debt-to-equity ratio, suggest a solid financial foundation. Its revenue growth is also strong compared to peers.",
-        "bear": "Dell's gross and net margins are weak compared to peers, and its current ratio is also a concern. Additionally, its P/B ratio is expensive versus peers.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, the price looks cheap for its earnings, cheap relative to sales and high returns on shareholder money.",
+        "bear": "Watch out that pricey relative to assets, thin gross margins and thin profit margins.",
+        "source": "deterministic"
       }
     },
     {
@@ -4676,8 +4684,8 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 158,
-          "raw": 0.207
+          "stories": 159,
+          "raw": 0.208
         }
       },
       "history": {
@@ -5164,12 +5172,13 @@
         "[technicals] SMA50 (140.31) below SMA200 (160.71) \u2014 downtrend",
         "[technicals] RSI 41 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.21 over 158 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.21 over 159 stories)"
       ],
       "ai": {
-        "bull": "The company's strong net margin, ROE, ROA, and revenue growth YoY are positive factors. Its lean debt-to-equity ratio and strong current ratio also support its financial health.",
-        "bear": "The stock's expensive valuation metrics, such as P/E, P/B, and P/S, compared to its sector and peers, are concerns. Additionally, the SMA50 being below SMA200 indicates a downtrend.",
-        "source": "groq"
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, strong profit margins, high returns on shareholder money and uses its assets efficiently.",
+        "bear": "Watch out that the price looks expensive for its earnings, pricey relative to assets, pricey relative to sales and the price trend is heading down.",
+        "source": "deterministic"
       }
     },
     {
@@ -5752,8 +5761,9 @@
         "[sentiment] sentiment: unavailable (baseline building; raw +0.32 over 44 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/E cheap, P/B cheap, P/S cheap and Gross margin strong and price trend/momentum is positive.",
-        "bear": "Bear case: versus peers, ROE weak and Debt/Equity heavy.",
+        "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
+        "bull": "On the plus side, the price looks cheap for its earnings, cheap relative to assets, cheap relative to sales and the price trend is heading up.",
+        "bear": "Watch out that low returns on shareholder money and heavy debt.",
         "source": "deterministic"
       }
     },
@@ -6240,8 +6250,9 @@
         "[sentiment] sentiment: unavailable (baseline building; raw +0.24 over 79 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/S cheap, ROA strong and Debt/Equity lean.",
-        "bear": "Bear case: versus peers, P/E expensive, P/B expensive, ROE weak and Current ratio weak.",
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, cheap relative to sales, uses its assets efficiently and low debt.",
+        "bear": "Watch out that the price looks expensive for its earnings, pricey relative to assets and low returns on shareholder money.",
         "source": "deterministic"
       }
     },
@@ -6263,7 +6274,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 248,
-          "raw": 0.13
+          "raw": 0.143
         }
       },
       "history": {
@@ -6736,11 +6747,12 @@
         "[fundamentals] Debt/Equity lean vs peers",
         "[fundamentals] Rev growth YoY strong vs peers",
         "[technicals] technicals: unavailable (MU: failed after retries: HTTP 429)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.13 over 248 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.14 over 248 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/E cheap, P/B cheap, P/S cheap and Net margin strong.",
-        "bear": "Bear case: no clear red flags in the screened data, but valuation/timing still warrant a look.",
+        "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
+        "bull": "On the plus side, the price looks cheap for its earnings, cheap relative to assets and cheap relative to sales.",
+        "bear": "No obvious red flags, but always check valuation and timing yourself.",
         "source": "deterministic"
       }
     },
@@ -6831,7 +6843,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 246,
-          "raw": 0.238
+          "raw": 0.227
         }
       },
       "history": {
@@ -7318,11 +7330,12 @@
         "[technicals] SMA50 (375.05) above SMA200 (250.58) \u2014 uptrend",
         "[technicals] RSI 50 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.24 over 246 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.23 over 246 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/B cheap, Debt/Equity lean and Rev growth YoY strong and price trend/momentum is positive.",
-        "bear": "Bear case: versus peers, P/E expensive, Gross margin weak, Net margin weak and ROE weak.",
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, cheap relative to assets, low debt, fast revenue growth and the price trend is heading up.",
+        "bear": "Watch out that the price looks expensive for its earnings, thin gross margins and thin profit margins.",
         "source": "deterministic"
       }
     },
@@ -7413,7 +7426,7 @@
         "sentiment": {
           "source": "vader_headlines",
           "stories": 250,
-          "raw": 0.251
+          "raw": 0.259
         }
       },
       "history": {
@@ -7890,11 +7903,12 @@
         "[technicals] SMA50 (92.70) above SMA200 (52.54) \u2014 uptrend",
         "[technicals] RSI 50 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.25 over 250 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.26 over 250 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/B cheap and P/S cheap and price trend/momentum is positive.",
-        "bear": "Bear case: versus peers, Gross margin weak, Net margin weak, ROE weak and ROA weak.",
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, cheap relative to assets, cheap relative to sales and the price trend is heading up.",
+        "bear": "Watch out that thin gross margins, thin profit margins and low returns on shareholder money.",
         "source": "deterministic"
       }
     },
@@ -8394,8 +8408,9 @@
         "[sentiment] sentiment: unavailable (baseline building; raw +0.23 over 151 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/E cheap, Gross margin strong, Net margin strong and ROE strong.",
-        "bear": "Bear case: versus peers, P/B expensive, P/S expensive, Current ratio weak and Debt/Equity heavy.",
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, the price looks cheap for its earnings, strong gross margins and strong profit margins.",
+        "bear": "Watch out that pricey relative to assets, pricey relative to sales and tight short-term finances.",
         "source": "deterministic"
       }
     },
@@ -8893,8 +8908,9 @@
         "[sentiment] sentiment: unavailable (baseline building; raw +0.27 over 67 stories)"
       ],
       "ai": {
-        "bull": "Bull case: no clearly favourable factors stand out in the screened data.",
-        "bear": "Bear case: high pe.",
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "Nothing clearly stands out in its favour in the screened data.",
+        "bear": "No obvious red flags, but always check valuation and timing yourself.",
         "source": "deterministic"
       }
     },
@@ -8915,8 +8931,8 @@
         "technicals": {},
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 156,
-          "raw": 0.19
+          "stories": 158,
+          "raw": 0.191
         }
       },
       "history": {
@@ -9320,11 +9336,12 @@
         "[fundamentals] P/B expensive vs peers",
         "[fundamentals] P/S expensive vs peers",
         "[technicals] technicals: unavailable (SNDK: failed after retries: HTTP 429)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.19 over 156 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.19 over 158 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, Gross margin strong, Net margin strong, ROE strong and ROA strong.",
-        "bear": "Bear case: versus peers, P/B expensive and P/S expensive.",
+        "takeaway": "Screening as a possible BUY \u2014 mainly because strong gross margins.",
+        "bull": "On the plus side, strong gross margins, strong profit margins and high returns on shareholder money.",
+        "bear": "Watch out that pricey relative to assets and pricey relative to sales.",
         "source": "deterministic"
       }
     },
@@ -9910,8 +9927,9 @@
         "[sentiment] sentiment: unavailable (baseline building; raw +0.34 over 78 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/E cheap, Gross margin strong, Net margin strong and ROE strong and price trend/momentum is positive.",
-        "bear": "Bear case: versus peers, P/B expensive, P/S expensive, Current ratio weak and Debt/Equity heavy.",
+        "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
+        "bull": "On the plus side, the price looks cheap for its earnings, strong gross margins, strong profit margins and the price trend is heading up.",
+        "bear": "Watch out that pricey relative to assets, pricey relative to sales and tight short-term finances.",
         "source": "deterministic"
       }
     },
@@ -10411,58 +10429,14 @@
         "[sentiment] sentiment: unavailable (baseline building; raw +0.29 over 51 stories)"
       ],
       "ai": {
-        "bull": "Bull case: versus peers, P/E cheap, Gross margin strong, Net margin strong and ROE strong.",
-        "bear": "Bear case: versus peers, P/B expensive, P/S expensive, Debt/Equity heavy and Rev growth YoY weak.",
+        "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
+        "bull": "On the plus side, the price looks cheap for its earnings, strong gross margins and strong profit margins.",
+        "bear": "Watch out that pricey relative to assets, pricey relative to sales and heavy debt.",
         "source": "deterministic"
       }
     }
   ],
   "changes": [
-    {
-      "symbol": "AMD",
-      "type": "verdict",
-      "text": "AMD WATCH-SELL \u2192 NEUTRAL",
-      "to": "NEUTRAL"
-    },
-    {
-      "symbol": "INTC",
-      "type": "verdict",
-      "text": "INTC WATCH-SELL \u2192 NEUTRAL",
-      "to": "NEUTRAL"
-    },
-    {
-      "symbol": "KO",
-      "type": "verdict",
-      "text": "KO NEUTRAL \u2192 WATCH-BUY",
-      "to": "WATCH-BUY"
-    },
-    {
-      "symbol": "META",
-      "type": "verdict",
-      "text": "META WATCH-BUY \u2192 NEUTRAL",
-      "to": "NEUTRAL"
-    },
-    {
-      "symbol": "PLTR",
-      "type": "verdict",
-      "text": "PLTR WATCH-BUY \u2192 NEUTRAL",
-      "to": "NEUTRAL"
-    },
-    {
-      "symbol": "ASML",
-      "type": "flag",
-      "text": "ASML new: near 52wk high"
-    },
-    {
-      "symbol": "KO",
-      "type": "flag",
-      "text": "KO new: near 52wk high"
-    },
-    {
-      "symbol": "TSM",
-      "type": "flag",
-      "text": "TSM new: near 52wk low"
-    },
     {
       "symbol": "AMD",
       "type": "mover",
@@ -10478,5 +10452,43 @@
       "type": "mover",
       "text": "TSM -4.5% today"
     }
-  ]
+  ],
+  "briefing": {
+    "generated_at": "2026-06-10T22:16:54.544537+00:00",
+    "source": "deterministic",
+    "text": "3 update(s) since the last run. Screening as possible buys: MU, SNDK, TSM, NVDA, AMZN, KO.",
+    "buy": [
+      {
+        "symbol": "MU",
+        "company": "Micron Technology, Inc.",
+        "line": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings."
+      },
+      {
+        "symbol": "SNDK",
+        "company": "Sandisk Corporation",
+        "line": "Screening as a possible BUY \u2014 mainly because strong gross margins."
+      },
+      {
+        "symbol": "TSM",
+        "company": "Taiwan Semiconductor Manufacturing Company Limited",
+        "line": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings."
+      },
+      {
+        "symbol": "NVDA",
+        "company": "NVIDIA Corporation",
+        "line": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings."
+      },
+      {
+        "symbol": "AMZN",
+        "company": "Amazon.com, Inc.",
+        "line": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings."
+      },
+      {
+        "symbol": "KO",
+        "company": "The Coca-Cola Company",
+        "line": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings."
+      }
+    ],
+    "sell": []
+  }
 }
