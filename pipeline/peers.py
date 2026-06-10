@@ -12,17 +12,24 @@ the workflow) and only refetched past the TTL — keeping us well under the free
 """
 from __future__ import annotations
 
+import os
 import json
-import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+import requests
 
 from pipeline import metrics
 from pipeline.data import finnhub_client as fh
 
 CACHE_PATH = Path(__file__).resolve().parent.parent / "cache" / "benchmarks.json"
 TTL_DAYS = 10
-MAX_PEERS = 12
+MAX_PEERS = 8
+
+# Bound the cold-start cost: refresh at most this many stale tickers per run.
+# Others keep their existing cache (or wait a run). This caps runtime and
+# staggers TTL expiry so the whole watchlist doesn't go cold on the same day.
+MAX_REFRESH_PER_RUN = int(os.environ.get("PEER_REFRESH_PER_RUN", "8"))
 
 
 def _load_cache() -> dict:
@@ -45,21 +52,39 @@ def _fresh(entry: dict, ttl_days: int) -> bool:
     return (datetime.now(tz=timezone.utc) - ts).days < ttl_days
 
 
-def build_benchmarks(symbols: list[str], *, ttl_days: int = TTL_DAYS, pause: float = 0.3) -> dict[str, dict]:
-    """Return {symbol: {"values":{k:median}, "source":{k:"peers"}, "peers":n}}."""
+def _from_cache(entry: dict) -> dict:
+    return {"values": entry["values"], "source": {k: "peers" for k in entry["values"]},
+            "peers": entry.get("peers", 0)}
+
+
+def build_benchmarks(symbols: list[str], *, ttl_days: int = TTL_DAYS,
+                     max_refresh: int = MAX_REFRESH_PER_RUN) -> dict[str, dict]:
+    """Return {symbol: {"values":{k:median}, "source":{k:"peers"}, "peers":n}}.
+
+    Finnhub calls are paced globally by finnhub_client._throttle(). At most
+    `max_refresh` stale tickers are refetched per run; the rest reuse cache.
+    """
     cache = _load_cache()
     out: dict[str, dict] = {}
-    peer_metrics_memo: dict[str, dict] = {}  # peer symbol -> extracted metrics (this run)
+    peer_metrics_memo: dict[str, dict] = {}
+    session = requests.Session()
+    refreshed = 0
 
     for sym in symbols:
         entry = cache.get(sym)
         if entry and _fresh(entry, ttl_days):
-            out[sym] = {"values": entry["values"], "source": {k: "peers" for k in entry["values"]},
-                        "peers": entry.get("peers", 0)}
+            out[sym] = _from_cache(entry)
+            continue
+        if refreshed >= max_refresh:
+            # Budget spent this run — keep stale cache if we have it, else skip
+            # (this ticker gets benchmarked on a later run).
+            if entry:
+                out[sym] = _from_cache(entry)
             continue
 
+        refreshed += 1
         try:
-            peers = fh.get_peers(sym)
+            peers = fh.get_peers(sym, session=session)
         except fh.FinnhubError:
             peers = []
         peers = [p for p in dict.fromkeys(peers) if p != sym][:MAX_PEERS]
@@ -69,11 +94,10 @@ def build_benchmarks(symbols: list[str], *, ttl_days: int = TTL_DAYS, pause: flo
             m = peer_metrics_memo.get(p)
             if m is None:
                 try:
-                    m = metrics.extract(fh.get_basic_financials(p), None)
+                    m = metrics.extract(fh.get_basic_financials(p, session=session), None)
                 except fh.FinnhubError:
                     m = {}
                 peer_metrics_memo[p] = m
-                time.sleep(pause)  # be gentle with the 60/min free tier
             for k, v in m.items():
                 collected.setdefault(k, []).append(v)
 
@@ -81,5 +105,7 @@ def build_benchmarks(symbols: list[str], *, ttl_days: int = TTL_DAYS, pause: flo
         cache[sym] = {"ts": datetime.now(tz=timezone.utc).isoformat(), "peers": len(peers), "values": values}
         out[sym] = {"values": values, "source": {k: "peers" for k in values}, "peers": len(peers)}
 
+    if refreshed:
+        print(f"peers: refreshed {refreshed} ticker(s); {len(symbols) - refreshed} from cache")
     _save_cache(cache)
     return out

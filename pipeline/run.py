@@ -209,7 +209,8 @@ def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
     records: list[dict] = []
     for symbol in watchlist:
         records.append(attempt(symbol))
-        time.sleep(1.1)  # stay polite vs the 60 calls/min free tier
+        # Finnhub calls are paced globally by finnhub_client._throttle(); no
+        # extra per-ticker sleep needed.
 
     # Run-level retry: any ticker that failed *because of* a rate limit gets one
     # more pass after a cooldown that lets the per-minute quota refill. Other

@@ -28,6 +28,20 @@ import requests
 BASE_URL = "https://finnhub.io/api/v1"
 DEFAULT_TIMEOUT = 15  # seconds
 
+# Proactive pacing: keep under the free tier's 60 calls/min so we never trip a
+# 429 (which would otherwise cascade into slow exponential backoff). One global
+# clock covers every Finnhub call — main fetch loop and peer benchmarks alike.
+_MIN_INTERVAL = float(os.environ.get("FINNHUB_MIN_INTERVAL", "1.05"))
+_last_call = 0.0
+
+
+def _throttle() -> None:
+    global _last_call
+    wait = _MIN_INTERVAL - (time.monotonic() - _last_call)
+    if wait > 0:
+        time.sleep(wait)
+    _last_call = time.monotonic()
+
 
 class FinnhubError(RuntimeError):
     """Raised when the Finnhub API returns an error or no usable data."""
@@ -50,6 +64,7 @@ def _get(session: requests.Session, path: str, params: dict, *, retries: int = 3
     backoff = 1.0
     last_exc: Exception | None = None
     for attempt in range(retries):
+        _throttle()
         try:
             resp = session.get(url, params=params, timeout=DEFAULT_TIMEOUT)
         except requests.RequestException as exc:  # network error

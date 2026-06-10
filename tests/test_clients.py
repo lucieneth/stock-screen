@@ -67,3 +67,26 @@ class TestPeerBenchmarks:
         bm = peers.build_benchmarks(["AAPL"])     # second run: served from cache
         assert self.peer_calls["n"] == first
         assert bm["AAPL"]["values"]["pe"] == 15.0
+
+    def test_refresh_cap_bounds_cold_start(self, wired):
+        # Cold cache, 5 symbols, cap of 2 -> only 2 get_peers calls this run.
+        bm = peers.build_benchmarks(["A", "B", "C", "D", "E"], max_refresh=2)
+        assert self.peer_calls["n"] == 2
+        # The 2 refreshed get values; the rest are skipped (no stale cache yet).
+        refreshed = [s for s in ("A", "B", "C", "D", "E") if bm.get(s, {}).get("values")]
+        assert len(refreshed) == 2
+
+
+class TestThrottle:
+    def test_paces_calls_to_min_interval(self, monkeypatch):
+        from pipeline.data import finnhub_client as fh
+        slept = []
+        monkeypatch.setattr(fh, "_MIN_INTERVAL", 1.05)
+        monkeypatch.setattr(fh, "_last_call", 0.0)
+        clock = {"t": 1000.0}
+        monkeypatch.setattr(fh.time, "monotonic", lambda: clock["t"])
+        monkeypatch.setattr(fh.time, "sleep", lambda s: (slept.append(s), clock.__setitem__("t", clock["t"] + s)))
+        fh._throttle()                 # first call: clock far from 0 -> no wait
+        clock["t"] += 0.2              # only 0.2s elapses before next call
+        fh._throttle()                 # must wait ~0.85s to honour 1.05s spacing
+        assert slept and abs(slept[-1] - 0.85) < 0.01

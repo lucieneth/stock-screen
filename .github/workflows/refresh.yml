@@ -17,6 +17,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 20   # safety net — a healthy run is a few minutes
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
