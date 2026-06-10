@@ -32,6 +32,8 @@ from pipeline import scoring
 from pipeline import metrics
 from pipeline import peers
 from pipeline import track_record
+from pipeline import sentiment_baseline
+from pipeline import changes
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "config.yaml"
@@ -52,7 +54,8 @@ def _candle_count(ohlcv) -> int:
     return len(ohlcv.get("c", [])) if isinstance(ohlcv, dict) else 0
 
 
-def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
+def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True,
+                 sent_baseline: float | None = None) -> dict:
     """Fetch data + run the peer-independent checks for one ticker.
 
     Produces a partial record with technicals/sentiment/alerts and the raw
@@ -115,8 +118,18 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
     # Peer-independent checks now; fundamentals scoring waits for benchmarks.
     merged_fin = {**fin_fmp, **fin_finnhub}
     technicals = tech_check.check(raw.get("ohlcv", {}), thresholds.get("technicals", {}))
-    sentiment = sent_check.check(raw.get("sentiment", {}), raw.get("news", []), thresholds.get("sentiment", {}))
+    sentiment = sent_check.check(raw.get("sentiment", {}), raw.get("news", []),
+                                 thresholds.get("sentiment", {}), baseline=sent_baseline)
     alerts = alert_check.check(raw.get("quote", {}), merged_fin, cfg.get("alerts", {}))
+
+    # Decoration for the dashboard: ~3 months of closes for the sparkline, and
+    # the next earnings date. Both best-effort, never block scoring.
+    closes = (raw.get("ohlcv") or {}).get("c") or []
+    spark = [round(float(c), 2) for c in closes[-63:]]  # ~one quarter of trading days
+    try:
+        next_earnings = fh.get_next_earnings(symbol)
+    except Exception:
+        next_earnings = None
 
     quote = raw.get("quote", {})
     return {
@@ -125,6 +138,8 @@ def assemble_one(symbol: str, cfg: dict, use_fmp: bool = True) -> dict:
         "sector": profile.get("sector") or "Unknown",
         "price": quote.get("c"),
         "change_pct": quote.get("dp"),
+        "spark": spark,
+        "next_earnings": next_earnings,
         "flags": sorted(alerts.get("flags", [])),
         "alerts": alerts.get("reasons", []),
         "details": {
@@ -179,9 +194,14 @@ def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
     watchlist = cfg.get("watchlist", [])
     use_fmp = bool(os.environ.get("FMP_API_KEY"))
 
+    # Per-ticker sentiment baselines from committed snapshots (A3): sentiment is
+    # scored as deviation from a ticker's own typical level, not absolute VADER.
+    baselines = sentiment_baseline.load_baselines()
+
     def attempt(symbol: str) -> dict:
         try:
-            return assemble_one(symbol, cfg, use_fmp=use_fmp)
+            return assemble_one(symbol, cfg, use_fmp=use_fmp,
+                                sent_baseline=baselines.get(symbol))
         except fh.FinnhubError as exc:
             return {"symbol": symbol, "error": str(exc)}
 
@@ -246,9 +266,20 @@ def write_outputs(payload: dict) -> None:
     (HISTORY_DIR / f"{stamp}.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def load_previous() -> dict | None:
+    """The latest.json from the previous run (yesterday's, in the checkout)."""
+    try:
+        return json.loads((DATA_DIR / "latest.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
 def main() -> None:
     cfg = load_config()
+    previous = load_previous()
     payload = run(cfg)
+    # "What changed since the last run" — verdict flips, new flags, movers.
+    payload["changes"] = changes.diff(previous, payload)
     write_outputs(payload)
     ok = sum(1 for r in payload["tickers"] if "error" not in r)
     print(f"Wrote docs/data/latest.json — {ok}/{payload['count']} tickers scored.")

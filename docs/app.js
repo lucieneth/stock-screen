@@ -39,6 +39,7 @@ async function load() {
     const data = await resp.json();
     allTickers = Array.isArray(data.tickers) ? data.tickers : [];
     renderUpdated(data);
+    renderChanges(data.changes);
     status.style.display = "none";
     apply();
   } catch (err) {
@@ -155,7 +156,6 @@ function render(rows) {
     const vclass = VERDICT_CLASS[t.verdict] || "neutral";
     const changeClass = (t.change_pct || 0) >= 0 ? "up" : "down";
 
-    const reasons = (t.reasons || []).map((r) => `<li>${esc(r)}</li>`).join("");
     const flags = (t.flags || []).map((f) => `<span class="flag">${esc(f)}</span>`).join("");
     const s = t.scores || {};
 
@@ -197,7 +197,9 @@ function render(rows) {
       <div class="price-row">
         <span class="price">${typeof t.price === "number" ? "$" + t.price.toFixed(2) : "—"}</span>
         <span class="change ${changeClass}">${fmtPct(t.change_pct)}</span>
+        ${sparklineSvg(t.spark)}
       </div>
+      ${earningsChip(t.next_earnings)}
       <div class="composite">Composite <strong>${fmtScore(t.composite)}</strong>
         <span class="coverage">coverage ${fmtScore(t.coverage)}</span></div>
       <div class="subscores">
@@ -209,7 +211,7 @@ function render(rows) {
       ${funBlock}
       <details>
         <summary>Why? (${(t.reasons || []).length} reasons)</summary>
-        <ul class="reasons">${reasons}</ul>
+        ${groupedReasons(t.reasons)}
       </details>`;
     container.appendChild(card);
   }
@@ -219,6 +221,77 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+// Tiny ~3-month price line next to the quote; colored by period direction.
+function sparklineSvg(closes) {
+  if (!Array.isArray(closes) || closes.length < 2) return "";
+  const W = 96, H = 28, n = closes.length;
+  let lo = Math.min(...closes), hi = Math.max(...closes);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const x = (i) => (i * W) / (n - 1);
+  const y = (v) => 2 + (1 - (v - lo) / (hi - lo)) * (H - 4);
+  const pts = closes.map((c, i) => `${x(i).toFixed(1)},${y(c).toFixed(1)}`).join(" ");
+  const up = closes[n - 1] >= closes[0];
+  const periodPct = ((closes[n - 1] / closes[0] - 1) * 100).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" class="spark" role="img"
+    aria-label="3-month price trend ${periodPct}%"><title>~3 months: ${periodPct}%</title>
+    <polyline points="${pts}" fill="none" stroke="${up ? "var(--up)" : "var(--down)"}" stroke-width="1.5"/></svg>`;
+}
+
+// "Earnings in Nd" chip; highlighted when imminent.
+function earningsChip(dateStr) {
+  if (!dateStr) return "";
+  const days = Math.ceil((new Date(dateStr + "T00:00:00Z") - Date.now()) / 86400000);
+  if (isNaN(days) || days < 0 || days > 120) return "";
+  const label = days === 0 ? "Earnings today" : `Earnings in ${days}d`;
+  return `<div class="earnings ${days <= 7 ? "soon" : ""}" title="Next earnings: ${esc(dateStr)}">📅 ${label}</div>`;
+}
+
+// "Why?" reasons grouped under dimension headers instead of [prefix] strings.
+function groupedReasons(reasons) {
+  const groups = {};
+  const order = [];
+  for (const r of reasons || []) {
+    const m = /^\[(\w+)\]\s*(.*)$/.exec(r);
+    const dim = m ? m[1] : "other";
+    const text = m ? m[2] : r;
+    if (!groups[dim]) { groups[dim] = []; order.push(dim); }
+    groups[dim].push(text);
+  }
+  return order.map((dim) =>
+    `<div class="reason-group"><h4>${esc(dim)}</h4>
+       <ul class="reasons">${groups[dim].map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`
+  ).join("");
+}
+
+// "What changed since the last run" strip.
+function renderChanges(list) {
+  const el = document.getElementById("changes");
+  if (!el) return;
+  if (!Array.isArray(list)) return;          // older payloads: leave hidden
+  if (!list.length) {
+    el.innerHTML = `<span class="ch-title">Since last run</span><span class="tr-muted">no changes</span>`;
+    el.hidden = false;
+    return;
+  }
+  const chip = (c) => {
+    let cls = c.type;
+    if (c.type === "verdict") cls += c.to === "WATCH-BUY" ? " up" : c.to === "WATCH-SELL" ? " down" : "";
+    if (c.type === "mover") cls += c.text.includes("+") ? " up" : " down";
+    return `<button class="ch-chip ${cls}" data-sym="${esc(c.symbol)}">${esc(c.text)}</button>`;
+  };
+  el.innerHTML = `<span class="ch-title">Since last run</span>${list.map(chip).join("")}`;
+  el.hidden = false;
+}
+
+// Clicking a change chip filters the dashboard to that ticker.
+document.getElementById("changes").addEventListener("click", (e) => {
+  const chip = e.target.closest(".ch-chip");
+  if (!chip) return;
+  const search = document.getElementById("search");
+  search.value = search.value === chip.dataset.sym ? "" : chip.dataset.sym;
+  apply();
+});
 
 // Build a small SVG line chart of a metric's quarterly history.
 function chartSvg(data) {

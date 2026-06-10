@@ -40,6 +40,58 @@ h1 { margin: 0.25rem 0; font-size: 1.5rem; }
   align-items: center;
   flex-wrap: wrap;
 }
+.changes {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+}
+.ch-title { font-weight: 700; margin-right: 0.2rem; }
+.ch-chip {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.ch-chip:hover { border-color: var(--accent); }
+.ch-chip.verdict.up { border-color: var(--buy); color: var(--buy); }
+.ch-chip.verdict.down { border-color: var(--sell); color: var(--sell); }
+.ch-chip.flag { color: #f1c40f; }
+.ch-chip.mover.up { color: var(--up); }
+.ch-chip.mover.down { color: var(--down); }
+
+.spark { width: 96px; height: 28px; margin-left: auto; flex: 0 0 auto; }
+
+.earnings {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0.1rem 0 0.2rem;
+}
+.earnings.soon {
+  color: #f1c40f;
+  background: rgba(241, 196, 15, 0.12);
+  border-radius: 5px;
+  padding: 0.1rem 0.4rem;
+}
+
+.reason-group h4 {
+  margin: 0.5rem 0 0.1rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.reason-group .reasons { margin: 0; }
+
 .track {
   background: var(--panel);
   border: 1px solid var(--border);

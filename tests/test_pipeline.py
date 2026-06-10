@@ -56,6 +56,7 @@ def wired(monkeypatch, tmp_path):
         "news": [{"headline": "Company beats earnings and raises guidance"}],
     })
     monkeypatch.setattr(runner.fh, "get_profile", lambda s, **k: {"sector": SECTOR[s], "companyName": s})
+    monkeypatch.setattr(runner.fh, "get_next_earnings", lambda s, **k: "2026-07-30")
     monkeypatch.setattr(runner.yahoo, "get_ohlcv", lambda s, **k: {"c": _uptrend(), "s": "ok"})
     fmp_fail = lambda *a, **k: (_ for _ in ()).throw(runner.fmp.FMPError("fmp down"))
     monkeypatch.setattr(runner.fmp, "get_ohlcv", fmp_fail)
@@ -66,6 +67,9 @@ def wired(monkeypatch, tmp_path):
     monkeypatch.setattr(peers, "CACHE_PATH", tmp_path / "benchmarks.json")
     monkeypatch.setattr("time.sleep", lambda *a: None)
     monkeypatch.delenv("FMP_API_KEY", raising=False)
+    # Pin sentiment baselines (don't read the repo's live history snapshots).
+    monkeypatch.setattr(runner.sentiment_baseline, "load_baselines",
+                        lambda **k: {"AAPL": 0.1, "JPM": 0.1})
 
 
 def test_end_to_end_record_shape(wired):
@@ -76,8 +80,11 @@ def test_end_to_end_record_shape(wired):
         assert r["verdict"] in ("WATCH-BUY", "NEUTRAL", "WATCH-SELL")
         assert r["sources"]["ohlcv"] == "yahoo"          # fallback chain landed on yahoo
         assert r["details"]["technicals"]["sma_fast"] > 0  # technicals actually computed
+        assert r["details"]["sentiment"]["baseline"] == 0.1  # baseline-relative sentiment
         assert r["fundamentals"], "sector-relative labels attached"
         assert r["history"]["pe"], "chart history attached"
+        assert len(r["spark"]) == 63 and r["spark"][-1] > 0  # sparkline closes
+        assert r["next_earnings"] == "2026-07-30"
         # finalize_one must clean up its scratch keys
         for hidden in ("_metric_values", "_tech", "_sent", "_merged_fin"):
             assert hidden not in r
@@ -108,13 +115,13 @@ def test_rate_limited_ticker_retried_others_not(wired, monkeypatch):
     calls = {"AAPL": 0, "JPM": 0}
     real = runner.assemble_one
 
-    def flaky(symbol, cfg, use_fmp=True):
+    def flaky(symbol, cfg, **kwargs):
         calls[symbol] += 1
         if symbol == "AAPL" and calls["AAPL"] == 1:
             raise runner.fh.FinnhubError("/quote -> HTTP 429 (rate limited)")
         if symbol == "JPM":
             raise runner.fh.FinnhubError("No quote data for 'JPM' (bad symbol)")
-        return real(symbol, cfg, use_fmp=use_fmp)
+        return real(symbol, cfg, **kwargs)
 
     monkeypatch.setattr(runner, "assemble_one", flaky)
     out = runner.run(CFG, rate_limit_cooldown=0)

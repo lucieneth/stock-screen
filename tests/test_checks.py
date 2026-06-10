@@ -36,31 +36,70 @@ class TestTechnicals:
         res = technicals.check({"c": _closes(), "s": "ok"}, TECH_CFG)
         assert 0 <= res["metrics"]["rsi"] <= 100
 
+    def test_momentum_positive_in_uptrend(self):
+        res = technicals.check({"c": _closes(300, slope=0.4), "s": "ok"}, TECH_CFG)
+        assert res["metrics"]["momentum_12_1"] > 0
+        assert any("12-1 momentum +" in r for r in res["reasons"])
+        assert res["score"] > 0
+
+    def test_momentum_negative_in_downtrend(self):
+        res = technicals.check({"c": _closes(300, slope=-0.4, base=300.0), "s": "ok"}, TECH_CFG)
+        assert res["metrics"]["momentum_12_1"] < 0
+        assert res["score"] < 0
+
+    def test_momentum_omitted_gracefully_below_lookback(self):
+        # 260 candles >= SMA200 but < the 273 needed for 12-1 momentum.
+        res = technicals.check({"c": _closes(260), "s": "ok"}, TECH_CFG)
+        assert "momentum_12_1" not in res["metrics"]
+        assert any("momentum unavailable" in r for r in res["reasons"])
+
+    def test_momentum_outweighs_rsi(self):
+        # A strong 12-1 uptrend must not be flipped negative by overbought RSI.
+        res = technicals.check({"c": _closes(300, slope=0.6), "s": "ok"}, TECH_CFG)
+        if "rsi_overbought" in res["flags"]:
+            assert res["score"] > 0
+
 
 class TestSentiment:
-    CFG = {"negative_spike": -0.2}
+    CFG = {"negative_spike": -0.2, "deviation_gain": 2.5}
+    POS = [{"headline": "Company beats earnings and raises guidance"},
+           {"headline": "Analysts upgrade after record quarter"}]
+    NEG = [{"headline": "Company files for bankruptcy after fraud probe"},
+           {"headline": "Shares plunge as lawsuit and recall widen losses"}]
 
     def test_finnhub_premium_score_preferred(self):
         res = sentiment.check({"companyNewsScore": 0.8}, [{"headline": "irrelevant"}], self.CFG)
         assert res["metrics"]["source"] == "finnhub_news_sentiment"
         assert res["score"] == 0.6  # (0.8 - 0.5) * 2
 
-    def test_vader_fallback_positive_headlines(self):
-        news = [{"headline": "Company beats earnings and raises guidance"},
-                {"headline": "Analysts upgrade after record quarter"}]
-        res = sentiment.check({"error": "403"}, news, self.CFG)
+    def test_no_baseline_reports_building_not_a_score(self):
+        # Absolute VADER level is structurally positive; without a baseline the
+        # dimension must be excluded from coverage, not scored.
+        res = sentiment.check({"error": "403"}, self.POS, self.CFG, baseline=None)
+        assert res["score"] == 0.0
+        assert "unavailable" in res["reasons"][0]
+        assert res["metrics"]["raw"] > 0  # raw still recorded for future baselines
+
+    def test_deviation_above_baseline_scores_positive(self):
+        res = sentiment.check({"error": "403"}, self.POS, self.CFG, baseline=0.1)
         assert res["metrics"]["source"] == "vader_headlines"
         assert res["score"] > 0
+        assert res["metrics"]["deviation"] > 0
 
-    def test_vader_negative_spike_flag(self):
-        news = [{"headline": "Company files for bankruptcy after fraud probe"},
-                {"headline": "Shares plunge as lawsuit and recall widen losses"}]
-        res = sentiment.check({"error": "403"}, news, self.CFG)
+    def test_same_as_baseline_is_neutral(self):
+        raw = sentiment.check({"error": "403"}, self.POS, self.CFG, baseline=0.0)["metrics"]["raw"]
+        res = sentiment.check({"error": "403"}, self.POS, self.CFG, baseline=raw)
+        # typical positivity with no deviation -> no signal (tolerance: raw is
+        # rounded to 3 decimals in metrics)
+        assert abs(res["score"]) < 0.01
+
+    def test_negative_deviation_spike_flag(self):
+        res = sentiment.check({"error": "403"}, self.NEG, self.CFG, baseline=0.3)
         assert res["score"] < 0
         assert "negative_sentiment_spike" in res["flags"]
 
     def test_no_headlines_is_neutral(self):
-        res = sentiment.check({"error": "403"}, [], self.CFG)
+        res = sentiment.check({"error": "403"}, [], self.CFG, baseline=0.3)
         assert res["score"] == 0.0
         assert res["metrics"]["source"] == "none"
 

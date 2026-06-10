@@ -152,6 +152,30 @@ def get_basic_financials(symbol: str, session: requests.Session | None = None) -
     return get_company_metrics(symbol, session=session)["metric"]
 
 
+def get_next_earnings(symbol: str, session: requests.Session | None = None,
+                      horizon_days: int = 120) -> str | None:
+    """Next scheduled earnings date (ISO) within `horizon_days`, or None.
+
+    Uses /calendar/earnings (free tier). Returns None rather than raising when
+    the calendar is empty or the plan gates it — earnings info is decoration,
+    not a scoring input.
+    """
+    session = session or requests.Session()
+    today = datetime.now(tz=timezone.utc).date()
+    try:
+        data = _get(session, "/calendar/earnings", {
+            "symbol": symbol,
+            "from": today.isoformat(),
+            "to": (today + timedelta(days=horizon_days)).isoformat(),
+        })
+    except FinnhubError:
+        return None
+    rows = data.get("earningsCalendar", []) if isinstance(data, dict) else []
+    dates = sorted(r.get("date") for r in rows
+                   if isinstance(r, dict) and r.get("date") and r["date"] >= today.isoformat())
+    return dates[0] if dates else None
+
+
 def get_peers(symbol: str, session: requests.Session | None = None) -> list[str]:
     """Industry peer tickers (/stock/peers) — the real peer group, free tier."""
     session = session or requests.Session()
