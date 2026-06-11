@@ -35,6 +35,22 @@ class FMPError(RuntimeError):
     """Raised when the FMP API returns an error or no usable data."""
 
 
+def _retry_wait(resp, backoff: float, cap: float = 30.0) -> float:
+    """Wait this long before retrying: Retry-After header if larger, capped."""
+    try:
+        retry_after = float(resp.headers.get("Retry-After", ""))
+    except (TypeError, ValueError):
+        retry_after = 0.0
+    return min(max(retry_after, backoff), cap)
+
+
+# Consecutive requests that exhausted all retries on HTTP 429. A couple of
+# these means the *daily* quota is gone (waiting out the per-minute window
+# didn't help), so further waiting just burns the job's 20-min timeout.
+_quota_strikes = 0
+_QUOTA_STRIKE_LIMIT = 3
+
+
 def _api_key() -> str:
     key = os.environ.get("FMP_API_KEY")
     if not key:
@@ -43,6 +59,7 @@ def _api_key() -> str:
 
 
 def _request(session: requests.Session, url: str, params: dict, *, retries: int = 3):
+    global _quota_strikes
     params = {**params, "apikey": _api_key()}
     backoff = 1.0
     last_exc: Exception | None = None
@@ -56,7 +73,14 @@ def _request(session: requests.Session, url: str, params: dict, *, retries: int 
             continue
         if resp.status_code == 429 or resp.status_code >= 500:
             last_exc = FMPError(f"HTTP {resp.status_code}")
-            time.sleep(backoff)
+            if resp.status_code == 429:
+                if _quota_strikes >= _QUOTA_STRIKE_LIMIT:
+                    break  # daily quota exhausted — fail fast to the next source
+                # 429 is FMP's per-minute window — 1-2s retries just burn the
+                # attempt budget, so wait long enough for the window to roll.
+                time.sleep(_retry_wait(resp, max(backoff, 10.0)))
+            else:
+                time.sleep(backoff)
             backoff *= 2
             continue
         if not resp.ok:
@@ -64,7 +88,10 @@ def _request(session: requests.Session, url: str, params: dict, *, retries: int 
         data = resp.json()
         if isinstance(data, dict) and (data.get("Error Message") or data.get("message")):
             raise FMPError(str(data.get("Error Message") or data.get("message"))[:160])
+        _quota_strikes = 0
         return data
+    if isinstance(last_exc, FMPError) and "429" in str(last_exc):
+        _quota_strikes += 1
     raise FMPError(f"failed after {retries} attempts: {last_exc}")
 
 

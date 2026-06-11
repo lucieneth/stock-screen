@@ -52,11 +52,13 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
 
 # How long cached fetches stay fresh (days). Fundamentals/series move
 # quarterly, profiles ~never, earnings until the date passes. OHLCV: a stale
-# copy (weekend-safe TTL) is a last resort when every live source fails.
+# copy is a last resort when every live source fails — two weeks of slightly
+# old sparkline/technicals (badged cache(stale)) beats an empty dashboard
+# during a sustained rate-limit outage like Yahoo bot-walling the runner IP.
 TTL_FUND = 7
 TTL_PROFILE = 30
 TTL_EARN = 5
-TTL_OHLCV_STALE = 5
+TTL_OHLCV_STALE = 14
 
 # Only cache the metric keys we actually read (extraction + alerts) and the
 # chart series we plot — Finnhub returns hundreds more, and committing those

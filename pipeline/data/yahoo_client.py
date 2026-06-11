@@ -36,6 +36,15 @@ class YahooError(RuntimeError):
     """Raised when Yahoo returns an error or no usable price data."""
 
 
+def _retry_wait(resp, backoff: float, cap: float = 60.0) -> float:
+    """Wait this long before retrying: Retry-After header if larger, capped."""
+    try:
+        retry_after = float(resp.headers.get("Retry-After", ""))
+    except (TypeError, ValueError):
+        retry_after = 0.0
+    return min(max(retry_after, backoff), cap)
+
+
 def _range_for(days: int) -> str:
     for cap, label in ((150, "6mo"), (340, "1y"), (680, "2y"), (1700, "5y")):
         if days <= cap:
@@ -64,7 +73,7 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
             # 401/403/999 are Yahoo's bot-wall responses; worth retrying on the
             # other host rather than failing immediately.
             last_exc = YahooError(f"HTTP {resp.status_code}")
-            time.sleep(backoff)
+            time.sleep(_retry_wait(resp, backoff))
             backoff *= 2
             continue
         if not resp.ok:
@@ -74,12 +83,16 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
 
 
 def get_many(symbols: list[str], days: int = 400, workers: int = 2,
-             jitter: float = 0.6) -> dict[str, dict]:
+             jitter: float = 0.6, second_chance_wait: float = 45.0) -> dict[str, dict]:
     """Fetch OHLCV for many symbols, gently (Yahoo rate-limits datacenter IPs).
 
     Small worker pool + per-request jitter avoids the burst-429 that otherwise
     rate-limits the whole GitHub Actions runner. Returns {symbol: ohlcv_dict};
     a failed fetch is {"error": "..."} so callers degrade per-ticker.
+
+    If the parallel pass leaves failures, one slow serial pass retries them
+    after `second_chance_wait` seconds — Yahoo's burst-429 usually clears
+    within a minute, and a missed symbol here costs a day of dashboard gaps.
     """
     def one(sym: str):
         if jitter:
@@ -91,7 +104,17 @@ def get_many(symbols: list[str], days: int = 400, workers: int = 2,
     if not symbols:
         return {}
     with ThreadPoolExecutor(max_workers=min(workers, len(symbols))) as ex:
-        return dict(ex.map(one, symbols))
+        out = dict(ex.map(one, symbols))
+    failed = [sym for sym, v in out.items() if "error" in v]
+    if failed and second_chance_wait > 0:
+        time.sleep(second_chance_wait)
+        for sym in failed:
+            time.sleep(random.uniform(0.5, 1.5))  # serial + paced, no burst
+            try:
+                out[sym] = get_ohlcv(sym, days=days)
+            except YahooError as exc:
+                out[sym] = {"error": str(exc)}
+    return out
 
 
 def _parse(payload: dict, symbol: str, days: int) -> dict:

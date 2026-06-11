@@ -44,13 +44,37 @@ class TestYahooParse:
         monkeypatch.setattr(yahoo_client, "get_ohlcv",
                             lambda s, **k: {"c": [1.0, 2.0], "s": "ok"} if s != "BAD"
                             else (_ for _ in ()).throw(yahoo_client.YahooError("no data")))
-        out = yahoo_client.get_many(["AAA", "BBB", "BAD"])
+        out = yahoo_client.get_many(["AAA", "BBB", "BAD"], second_chance_wait=0)
         assert out["AAA"]["c"] == [1.0, 2.0]
         assert "error" in out["BAD"]          # failures are per-ticker, not fatal
         assert set(out) == {"AAA", "BBB", "BAD"}
 
+    def test_get_many_second_chance_recovers(self, monkeypatch):
+        # First pass 429s (burst), the slow serial retry succeeds.
+        calls = {"BAD": 0}
+
+        def fake_get(s, **k):
+            if s == "BAD":
+                calls["BAD"] += 1
+                if calls["BAD"] == 1:
+                    raise yahoo_client.YahooError("HTTP 429")
+            return {"c": [1.0], "s": "ok"}
+
+        slept = []
+        monkeypatch.setattr(yahoo_client, "get_ohlcv", fake_get)
+        monkeypatch.setattr(yahoo_client.time, "sleep", lambda s: slept.append(s))
+        out = yahoo_client.get_many(["AAA", "BAD"], second_chance_wait=45.0)
+        assert out["BAD"]["c"] == [1.0]       # recovered, no error key
+        assert 45.0 in slept                  # cooled down before retrying
+
     def test_get_many_empty(self):
         assert yahoo_client.get_many([]) == {}
+
+    def test_retry_wait_honors_retry_after_header(self):
+        mk = lambda h: type("R", (), {"headers": h})()
+        assert yahoo_client._retry_wait(mk({"Retry-After": "7"}), 1.0) == 7.0
+        assert yahoo_client._retry_wait(mk({}), 2.0) == 2.0            # falls back to backoff
+        assert yahoo_client._retry_wait(mk({"Retry-After": "999"}), 1.0) == 60.0  # capped
 
 
 class TestPeerBenchmarks:
@@ -87,6 +111,34 @@ class TestPeerBenchmarks:
         # The 2 refreshed get values; the rest are skipped (no stale cache yet).
         refreshed = [s for s in ("A", "B", "C", "D", "E") if bm.get(s, {}).get("values")]
         assert len(refreshed) == 2
+
+
+class TestFMPQuotaBreaker:
+    def _wired(self, monkeypatch):
+        from pipeline.data import fmp_client as fmp
+        monkeypatch.setattr(fmp, "_quota_strikes", 0)
+        monkeypatch.setenv("FMP_API_KEY", "test-key")
+        slept = []
+        monkeypatch.setattr(fmp.time, "sleep", lambda s: slept.append(s))
+        resp = type("R", (), {"status_code": 429, "ok": False, "headers": {}, "text": ""})()
+        session = type("S", (), {"get": lambda self, *a, **k: resp})()
+        return fmp, session, slept
+
+    def test_429_waits_out_the_minute_window(self, monkeypatch):
+        fmp, session, slept = self._wired(monkeypatch)
+        with pytest.raises(fmp.FMPError):
+            fmp._request(session, "http://x", {})
+        assert slept and all(s >= 10 for s in slept)
+
+    def test_fails_fast_once_quota_is_clearly_gone(self, monkeypatch):
+        fmp, session, slept = self._wired(monkeypatch)
+        for _ in range(fmp._QUOTA_STRIKE_LIMIT):
+            with pytest.raises(fmp.FMPError):
+                fmp._request(session, "http://x", {})
+        before = len(slept)
+        with pytest.raises(fmp.FMPError):
+            fmp._request(session, "http://x", {})   # strike limit hit
+        assert len(slept) == before                 # no waiting: fail straight to next source
 
 
 class TestThrottle:
