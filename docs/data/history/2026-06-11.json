@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-06-11T20:01:28.700379+00:00",
+  "generated_at": "2026-06-11T21:35:46.861361+00:00",
   "count": 19,
   "tickers": [
     {
       "symbol": "AAPL",
       "company": "Apple Inc.",
       "sector": "Technology",
-      "price": 295.81,
-      "change_pct": 1.45,
+      "price": 295.63,
+      "change_pct": 1.39,
       "spark": [
         250.12,
         252.82,
@@ -71,7 +71,7 @@
         301.54,
         290.55,
         291.58,
-        295.81
+        295.63
       ],
       "next_earnings": "2026-07-29",
       "missing": [],
@@ -79,11 +79,11 @@
       "alerts": [],
       "details": {
         "technicals": {
-          "sma_fast": 284.79,
+          "sma_fast": 284.78,
           "sma_slow": 266.56,
-          "rsi": 48.3,
-          "macd": 3.32,
-          "macd_signal": 6.637,
+          "rsi": 48.1,
+          "macd": 3.306,
+          "macd_signal": 6.634,
           "momentum_12_1": 0.5035
         },
         "sentiment": {
@@ -439,7 +439,7 @@
           "label": "P/E",
           "value": 34.7548,
           "display": "34.8\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -576,7 +576,7 @@
         "[fundamentals] Debt/Equity heavy vs peers",
         "[fundamentals] Rev growth YoY weak vs peers",
         "[technicals] 12-1 momentum +50% (positive)",
-        "[technicals] SMA50 (284.79) above SMA200 (266.56) \u2014 uptrend",
+        "[technicals] SMA50 (284.78) above SMA200 (266.56) \u2014 uptrend",
         "[technicals] RSI 48 (neutral)",
         "[technicals] MACD below signal (bearish)",
         "[sentiment] Headline sentiment +0.32 vs own baseline +0.35 (deviation -0.02, 244 stories: 164+ / 53-)"
@@ -592,8 +592,8 @@
       "symbol": "MSFT",
       "company": "Microsoft Corporation",
       "sector": "Technology",
-      "price": 390.47,
-      "change_pct": -1.73,
+      "price": 390.34,
+      "change_pct": -1.77,
       "spark": [
         395.55,
         399.95,
@@ -657,7 +657,7 @@
         411.74,
         403.41,
         397.36,
-        390.47
+        390.34
       ],
       "next_earnings": "2026-07-28",
       "missing": [],
@@ -667,17 +667,17 @@
         "technicals": {
           "sma_fast": 411.37,
           "sma_slow": 454.29,
-          "rsi": 36.9,
-          "macd": -2.463,
-          "macd_signal": 2.625,
+          "rsi": 36.8,
+          "macd": -2.473,
+          "macd_signal": 2.623,
           "momentum_12_1": -0.1426
         },
         "sentiment": {
           "source": "vader_headlines",
           "stories": 249,
-          "raw": 0.272,
-          "baseline": 0.27,
-          "deviation": 0.002
+          "raw": 0.267,
+          "baseline": 0.272,
+          "deviation": -0.005
         }
       },
       "history": {
@@ -1025,7 +1025,7 @@
           "label": "P/E",
           "value": 23.8848,
           "display": "23.9\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -1143,12 +1143,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": -0.089,
+      "composite": -0.094,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.333,
         "technicals": -0.64,
-        "sentiment": 0.006
+        "sentiment": -0.013
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -1164,7 +1164,7 @@
         "[technicals] SMA50 (411.37) below SMA200 (454.29) \u2014 downtrend",
         "[technicals] RSI 37 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.27 vs own baseline +0.27 (deviation +0.00, 249 stories: 164+ / 60-)"
+        "[sentiment] Headline sentiment +0.27 vs own baseline +0.27 (deviation -0.01, 249 stories: 163+ / 61-)"
       ],
       "ai": {
         "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
@@ -1177,8 +1177,8 @@
       "symbol": "GOOGL",
       "company": "Alphabet Inc.",
       "sector": "Communication Services",
-      "price": 356.22,
-      "change_pct": -0.04,
+      "price": 357.77,
+      "change_pct": 0.39,
       "spark": [
         302.28,
         305.56,
@@ -1242,7 +1242,7 @@
         363.31,
         364.26,
         356.38,
-        356.22
+        357.77
       ],
       "next_earnings": "2026-07-21",
       "missing": [],
@@ -1250,19 +1250,19 @@
       "alerts": [],
       "details": {
         "technicals": {
-          "sma_fast": 360.98,
-          "sma_slow": 307.17,
-          "rsi": 39.5,
-          "macd": -2.527,
-          "macd_signal": 2.081,
+          "sma_fast": 361.01,
+          "sma_slow": 307.18,
+          "rsi": 40.7,
+          "macd": -2.403,
+          "macd_signal": 2.105,
           "momentum_12_1": 1.2702
         },
         "sentiment": {
           "source": "vader_headlines",
           "stories": 248,
-          "raw": 0.268,
+          "raw": 0.261,
           "baseline": 0.302,
-          "deviation": -0.034
+          "deviation": -0.041
         }
       },
       "history": {
@@ -1610,7 +1610,7 @@
           "label": "P/E",
           "value": 27.4669,
           "display": "27.5\u00d7",
-          "sector_benchmark": 26.3477,
+          "sector_benchmark": 26.4798,
           "benchmark_source": "sector",
           "word": "in line",
           "tone": "neutral"
@@ -1728,12 +1728,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": 0.216,
+      "composite": 0.211,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.111,
         "technicals": 0.55,
-        "sentiment": -0.085
+        "sentiment": -0.102
       },
       "reasons": [
         "[fundamentals] Net margin strong vs peers",
@@ -1746,10 +1746,10 @@
         "[fundamentals] Gross margin weak vs peers",
         "[fundamentals] Current ratio weak vs peers",
         "[technicals] 12-1 momentum +127% (positive)",
-        "[technicals] SMA50 (360.98) above SMA200 (307.17) \u2014 uptrend",
-        "[technicals] RSI 40 (neutral)",
+        "[technicals] SMA50 (361.01) above SMA200 (307.18) \u2014 uptrend",
+        "[technicals] RSI 41 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.27 vs own baseline +0.30 (deviation -0.03, 248 stories: 160+ / 58-)"
+        "[sentiment] Headline sentiment +0.26 vs own baseline +0.30 (deviation -0.04, 248 stories: 157+ / 60-)"
       ],
       "ai": {
         "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
@@ -1762,8 +1762,8 @@
       "symbol": "AMZN",
       "company": "Amazon.com, Inc.",
       "sector": "Consumer Cyclical",
-      "price": 241.34,
-      "change_pct": 1.4,
+      "price": 241.51,
+      "change_pct": 1.47,
       "spark": [
         207.67,
         211.74,
@@ -1827,7 +1827,7 @@
         245.22,
         244.19,
         238.0,
-        241.34
+        241.51
       ],
       "next_earnings": "2026-07-29",
       "missing": [],
@@ -1837,17 +1837,17 @@
         "technicals": {
           "sma_fast": 254.21,
           "sma_slow": 232.46,
-          "rsi": 36.6,
-          "macd": -4.237,
-          "macd_signal": -0.631,
+          "rsi": 36.8,
+          "macd": -4.223,
+          "macd_signal": -0.628,
           "momentum_12_1": 0.267
         },
         "sentiment": {
           "source": "vader_headlines",
           "stories": 250,
-          "raw": 0.379,
+          "raw": 0.37,
           "baseline": 0.364,
-          "deviation": 0.015
+          "deviation": 0.006
         }
       },
       "history": {
@@ -2195,7 +2195,7 @@
           "label": "P/E",
           "value": 28.7161,
           "display": "28.7\u00d7",
-          "sector_benchmark": 82.9328,
+          "sector_benchmark": 84.279,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -2313,12 +2313,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "WATCH-BUY",
-      "composite": 0.347,
+      "composite": 0.341,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.4,
         "technicals": 0.506,
-        "sentiment": 0.039
+        "sentiment": 0.014
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -2335,7 +2335,7 @@
         "[technicals] SMA50 (254.21) above SMA200 (232.46) \u2014 uptrend",
         "[technicals] RSI 37 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.38 vs own baseline +0.36 (deviation +0.02, 250 stories: 184+ / 48-)"
+        "[sentiment] Headline sentiment +0.37 vs own baseline +0.36 (deviation +0.01, 250 stories: 182+ / 50-)"
       ],
       "ai": {
         "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
@@ -2348,8 +2348,8 @@
       "symbol": "NVDA",
       "company": "NVIDIA Corporation",
       "sector": "Technology",
-      "price": 204.62,
-      "change_pct": 2.1,
+      "price": 204.87,
+      "change_pct": 2.22,
       "spark": [
         180.25,
         183.22,
@@ -2413,7 +2413,7 @@
         208.64,
         208.19,
         200.42,
-        204.62
+        204.87
       ],
       "next_earnings": "2026-08-25",
       "missing": [],
@@ -2423,17 +2423,17 @@
         "technicals": {
           "sma_fast": 206.32,
           "sma_slow": 189.14,
-          "rsi": 44.8,
-          "macd": -0.743,
-          "macd_signal": 1.843,
+          "rsi": 45.0,
+          "macd": -0.723,
+          "macd_signal": 1.847,
           "momentum_12_1": 0.5811
         },
         "sentiment": {
           "source": "vader_headlines",
           "stories": 249,
           "raw": 0.308,
-          "baseline": 0.294,
-          "deviation": 0.014
+          "baseline": 0.307,
+          "deviation": 0.001
         }
       },
       "history": {
@@ -2781,7 +2781,7 @@
           "label": "P/E",
           "value": 31.2982,
           "display": "31.3\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -2899,12 +2899,12 @@
       ],
       "peers_in_sector": 11,
       "verdict": "WATCH-BUY",
-      "composite": 0.512,
+      "composite": 0.504,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.778,
         "technicals": 0.55,
-        "sentiment": 0.035
+        "sentiment": 0.003
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -2920,7 +2920,7 @@
         "[technicals] SMA50 (206.32) above SMA200 (189.14) \u2014 uptrend",
         "[technicals] RSI 45 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.31 vs own baseline +0.29 (deviation +0.01, 249 stories: 165+ / 59-)"
+        "[sentiment] Headline sentiment +0.31 vs own baseline +0.31 (deviation +0.00, 249 stories: 165+ / 59-)"
       ],
       "ai": {
         "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
@@ -2933,8 +2933,8 @@
       "symbol": "META",
       "company": "Meta Platforms, Inc.",
       "sector": "Communication Services",
-      "price": 568.91,
-      "change_pct": -0.36,
+      "price": 568.43,
+      "change_pct": -0.45,
       "spark": [
         613.71,
         627.45,
@@ -2998,7 +2998,7 @@
         585.39,
         584.59,
         570.98,
-        568.91
+        568.43
       ],
       "next_earnings": "2026-07-28",
       "missing": [],
@@ -3006,19 +3006,19 @@
       "alerts": [],
       "details": {
         "technicals": {
-          "sma_fast": 622.08,
+          "sma_fast": 622.07,
           "sma_slow": 659.02,
-          "rsi": 35.2,
-          "macd": -11.344,
-          "macd_signal": -6.751,
+          "rsi": 35.0,
+          "macd": -11.382,
+          "macd_signal": -6.759,
           "momentum_12_1": -0.1117
         },
         "sentiment": {
           "source": "vader_headlines",
           "stories": 245,
-          "raw": 0.291,
+          "raw": 0.278,
           "baseline": 0.285,
-          "deviation": 0.006
+          "deviation": -0.007
         }
       },
       "history": {
@@ -3366,7 +3366,7 @@
           "label": "P/E",
           "value": 21.0228,
           "display": "21.0\u00d7",
-          "sector_benchmark": 26.3477,
+          "sector_benchmark": 26.4798,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -3484,12 +3484,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": 0.017,
+      "composite": 0.008,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.556,
         "technicals": -0.599,
-        "sentiment": 0.015
+        "sentiment": -0.018
       },
       "reasons": [
         "[fundamentals] P/E cheap vs sector",
@@ -3502,10 +3502,10 @@
         "[fundamentals] P/S expensive vs peers",
         "[fundamentals] Current ratio weak vs peers",
         "[technicals] 12-1 momentum -11% (negative)",
-        "[technicals] SMA50 (622.08) below SMA200 (659.02) \u2014 downtrend",
+        "[technicals] SMA50 (622.07) below SMA200 (659.02) \u2014 downtrend",
         "[technicals] RSI 35 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.29 vs own baseline +0.28 (deviation +0.01, 245 stories: 158+ / 57-)"
+        "[sentiment] Headline sentiment +0.28 vs own baseline +0.28 (deviation -0.01, 245 stories: 155+ / 59-)"
       ],
       "ai": {
         "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
@@ -3518,8 +3518,8 @@
       "symbol": "TSLA",
       "company": "Tesla, Inc.",
       "sector": "Consumer Cyclical",
-      "price": 397.76,
-      "change_pct": 4.24,
+      "price": 399.15,
+      "change_pct": 4.6,
       "spark": [
         391.2,
         395.56,
@@ -3583,7 +3583,7 @@
         408.95,
         396.68,
         381.59,
-        397.76
+        399.15
       ],
       "next_earnings": "2026-07-21",
       "missing": [],
@@ -3591,19 +3591,19 @@
       "alerts": [],
       "details": {
         "technicals": {
-          "sma_fast": 397.77,
-          "sma_slow": 415.41,
-          "rsi": 45.8,
-          "macd": -2.349,
-          "macd_signal": 3.266,
+          "sma_fast": 397.8,
+          "sma_slow": 415.42,
+          "rsi": 46.3,
+          "macd": -2.238,
+          "macd_signal": 3.288,
           "momentum_12_1": 0.3641
         },
         "sentiment": {
           "source": "vader_headlines",
           "stories": 243,
           "raw": 0.269,
-          "baseline": 0.274,
-          "deviation": -0.005
+          "baseline": 0.269,
+          "deviation": 0.0
         }
       },
       "history": {
@@ -3951,7 +3951,7 @@
           "label": "P/E",
           "value": 385.764,
           "display": "385.8\u00d7",
-          "sector_benchmark": 82.9328,
+          "sector_benchmark": 84.279,
           "benchmark_source": "sector",
           "word": "expensive",
           "tone": "bad"
@@ -4069,12 +4069,12 @@
       ],
       "peers_in_sector": 10,
       "verdict": "NEUTRAL",
-      "composite": 0.06,
+      "composite": 0.063,
       "coverage": 1.0,
       "scores": {
         "fundamentals": 0.2,
         "technicals": -0.05,
-        "sentiment": -0.012
+        "sentiment": 0.001
       },
       "reasons": [
         "[fundamentals] Gross margin strong vs peers",
@@ -4088,10 +4088,10 @@
         "[fundamentals] P/S expensive vs peers",
         "[fundamentals] Rev growth YoY weak vs peers",
         "[technicals] 12-1 momentum +36% (positive)",
-        "[technicals] SMA50 (397.77) below SMA200 (415.41) \u2014 downtrend",
+        "[technicals] SMA50 (397.80) below SMA200 (415.42) \u2014 downtrend",
         "[technicals] RSI 46 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] Headline sentiment +0.27 vs own baseline +0.27 (deviation -0.00, 243 stories: 156+ / 51-)"
+        "[sentiment] Headline sentiment +0.27 vs own baseline +0.27 (deviation +0.00, 243 stories: 156+ / 51-)"
       ],
       "ai": {
         "takeaway": "A mixed picture \u2014 worth watching, but no strong push either way.",
@@ -4186,8 +4186,8 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 119,
-          "raw": 0.438
+          "stories": 120,
+          "raw": 0.442
         }
       },
       "history": {
@@ -4532,7 +4532,7 @@
           "label": "P/E",
           "value": 29.621,
           "display": "29.6\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -4662,7 +4662,7 @@
         "[technicals] SMA50 (250.53) above SMA200 (164.13) \u2014 uptrend",
         "[technicals] RSI 64 (neutral)",
         "[technicals] MACD above signal (bullish)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.44 over 119 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.44 over 120 stories)"
       ],
       "ai": {
         "takeaway": "Screening as a possible BUY \u2014 mainly because the price looks cheap for its earnings.",
@@ -5106,7 +5106,7 @@
           "label": "P/E",
           "value": 138.7723,
           "display": "138.8\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "expensive",
           "tone": "bad"
@@ -5258,8 +5258,8 @@
       "symbol": "TSM",
       "company": "Taiwan Semiconductor Manufacturing Company Limited",
       "sector": "Technology",
-      "price": 417.87,
-      "change_pct": 2.23,
+      "price": 421.07,
+      "change_pct": 3.01,
       "spark": [
         338.31,
         340.23,
@@ -5323,7 +5323,7 @@
         426.8,
         427.92,
         408.75,
-        417.87
+        421.07
       ],
       "next_earnings": "2026-07-15",
       "missing": [],
@@ -5331,15 +5331,15 @@
         "near_52wk_low"
       ],
       "alerts": [
-        "Near 52-wk low (417.87 vs 991)"
+        "Near 52-wk low (421.07 vs 991)"
       ],
       "details": {
         "technicals": {
-          "sma_fast": 396.51,
-          "sma_slow": 330.08,
-          "rsi": 51.7,
-          "macd": 7.649,
-          "macd_signal": 10.152,
+          "sma_fast": 396.57,
+          "sma_slow": 330.1,
+          "rsi": 52.8,
+          "macd": 7.905,
+          "macd_signal": 10.203,
           "momentum_12_1": 0.8674
         },
         "sentiment": {
@@ -5693,7 +5693,7 @@
           "label": "P/E",
           "value": 30.9903,
           "display": "31.0\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -5828,8 +5828,8 @@
         "[fundamentals] ROE weak vs peers",
         "[fundamentals] Debt/Equity heavy vs peers",
         "[technicals] 12-1 momentum +87% (positive)",
-        "[technicals] SMA50 (396.51) above SMA200 (330.08) \u2014 uptrend",
-        "[technicals] RSI 52 (neutral)",
+        "[technicals] SMA50 (396.57) above SMA200 (330.10) \u2014 uptrend",
+        "[technicals] RSI 53 (neutral)",
         "[technicals] MACD below signal (bearish)",
         "[sentiment] sentiment: unavailable (baseline building; raw +0.28 over 40 stories)"
       ],
@@ -5930,8 +5930,8 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 70,
-          "raw": 0.259
+          "stories": 72,
+          "raw": 0.266
         }
       },
       "history": {
@@ -6280,7 +6280,7 @@
           "label": "P/E",
           "value": 62.7883,
           "display": "62.8\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "expensive",
           "tone": "bad"
@@ -6397,7 +6397,7 @@
         "[technicals] SMA50 (99.42) below SMA200 (139.52) \u2014 downtrend",
         "[technicals] RSI 50 (neutral)",
         "[technicals] MACD below signal (bearish)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.26 over 70 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.27 over 72 stories)"
       ],
       "ai": {
         "takeaway": "Screening as one to AVOID/trim \u2014 mainly because the price looks expensive for its earnings.",
@@ -6842,7 +6842,7 @@
           "label": "P/E",
           "value": 41.7221,
           "display": "41.7\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -6983,8 +6983,8 @@
       "symbol": "AMD",
       "company": "Advanced Micro Devices, Inc.",
       "sector": "Technology",
-      "price": 488.12,
-      "change_pct": 7.9,
+      "price": 488.45,
+      "change_pct": 7.97,
       "spark": [
         193.39,
         196.58,
@@ -7048,7 +7048,7 @@
         490.33,
         475.51,
         452.4,
-        488.12
+        488.45
       ],
       "next_earnings": "2026-08-03",
       "missing": [],
@@ -7056,15 +7056,15 @@
         "big_daily_move"
       ],
       "alerts": [
-        "Daily move +7.9% (>= 5%)"
+        "Daily move +8.0% (>= 5%)"
       ],
       "details": {
         "technicals": {
           "sma_fast": 380.75,
           "sma_slow": 252.21,
-          "rsi": 56.8,
-          "macd": 28.407,
-          "macd_signal": 38.711,
+          "rsi": 56.9,
+          "macd": 28.433,
+          "macd_signal": 38.716,
           "momentum_12_1": 2.6776
         },
         "sentiment": {
@@ -7418,7 +7418,7 @@
           "label": "P/E",
           "value": 154.7931,
           "display": "154.8\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "expensive",
           "tone": "bad"
@@ -7570,8 +7570,8 @@
       "symbol": "INTC",
       "company": "Intel Corporation",
       "sector": "Technology",
-      "price": 117.43,
-      "change_pct": 9.71,
+      "price": 116.96,
+      "change_pct": 9.27,
       "spark": [
         45.77,
         45.76,
@@ -7635,7 +7635,7 @@
         110.27,
         107.92,
         107.04,
-        117.43
+        116.96
       ],
       "next_earnings": "2026-07-22",
       "missing": [],
@@ -7643,15 +7643,15 @@
         "big_daily_move"
       ],
       "alerts": [
-        "Daily move +9.7% (>= 5%)"
+        "Daily move +9.3% (>= 5%)"
       ],
       "details": {
         "technicals": {
           "sma_fast": 94.16,
           "sma_slow": 53.0,
-          "rsi": 58.1,
-          "macd": 3.431,
-          "macd_signal": 5.462,
+          "rsi": 57.8,
+          "macd": 3.394,
+          "macd_signal": 5.455,
           "momentum_12_1": 4.8167
         },
         "sentiment": {
@@ -8579,7 +8579,7 @@
           "label": "P/E",
           "value": 23.9574,
           "display": "24.0\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -8809,8 +8809,8 @@
         },
         "sentiment": {
           "source": "vader_headlines",
-          "stories": 61,
-          "raw": 0.177
+          "stories": 62,
+          "raw": 0.18
         }
       },
       "history": {
@@ -9159,7 +9159,7 @@
           "label": "P/E",
           "value": 56.4169,
           "display": "56.4\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "in line",
           "tone": "neutral"
@@ -9282,7 +9282,7 @@
         "[technicals] SMA50 (1505.83) above SMA200 (1229.04) \u2014 uptrend",
         "[technicals] RSI 65 (neutral)",
         "[technicals] MACD above signal (bullish)",
-        "[sentiment] sentiment: unavailable (baseline building; raw +0.18 over 61 stories)"
+        "[sentiment] sentiment: unavailable (baseline building; raw +0.18 over 62 stories)"
       ],
       "ai": {
         "takeaway": "Screening as a possible BUY \u2014 mainly because it scores well overall.",
@@ -9667,7 +9667,7 @@
           "label": "P/E",
           "value": 54.1016,
           "display": "54.1\u00d7",
-          "sector_benchmark": 56.198,
+          "sector_benchmark": 56.9654,
           "benchmark_source": "sector",
           "word": "in line",
           "tone": "neutral"
@@ -9799,8 +9799,8 @@
       "symbol": "KO",
       "company": "The Coca-Cola Company",
       "sector": "Consumer Defensive",
-      "price": 82.96,
-      "change_pct": -0.75,
+      "price": 82.53,
+      "change_pct": -1.27,
       "spark": [
         77.34,
         77.82,
@@ -9864,7 +9864,7 @@
         79.54,
         81.34,
         83.59,
-        82.96
+        82.53
       ],
       "next_earnings": "2026-07-20",
       "missing": [],
@@ -9872,15 +9872,15 @@
         "near_52wk_high"
       ],
       "alerts": [
-        "Near 52-wk high (82.96 vs 82.66)"
+        "Near 52-wk high (82.53 vs 82.66)"
       ],
       "details": {
         "technicals": {
-          "sma_fast": 78.53,
+          "sma_fast": 78.52,
           "sma_slow": 73.41,
-          "rsi": 62.5,
-          "macd": 0.733,
-          "macd_signal": 0.487,
+          "rsi": 60.5,
+          "macd": 0.698,
+          "macd_signal": 0.48,
           "momentum_12_1": 0.1136
         },
         "sentiment": {
@@ -10234,7 +10234,7 @@
           "label": "P/E",
           "value": 26.2652,
           "display": "26.3\u00d7",
-          "sector_benchmark": 38.1902,
+          "sector_benchmark": 38.0826,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -10371,8 +10371,8 @@
         "[fundamentals] Debt/Equity heavy vs peers",
         "[fundamentals] Rev growth YoY weak vs peers",
         "[technicals] 12-1 momentum +11% (positive)",
-        "[technicals] SMA50 (78.53) above SMA200 (73.41) \u2014 uptrend",
-        "[technicals] RSI 63 (neutral)",
+        "[technicals] SMA50 (78.52) above SMA200 (73.41) \u2014 uptrend",
+        "[technicals] RSI 61 (neutral)",
         "[technicals] MACD above signal (bullish)",
         "[sentiment] sentiment: unavailable (baseline building; raw +0.39 over 84 stories)"
       ],
@@ -10819,7 +10819,7 @@
           "label": "P/E",
           "value": 23.4184,
           "display": "23.4\u00d7",
-          "sector_benchmark": 82.9328,
+          "sector_benchmark": 84.279,
           "benchmark_source": "sector",
           "word": "cheap",
           "tone": "good"
@@ -10961,31 +10961,9 @@
   ],
   "changes": [
     {
-      "symbol": "AMZN",
-      "type": "verdict",
-      "text": "AMZN NEUTRAL \u2192 WATCH-BUY",
-      "to": "WATCH-BUY"
-    },
-    {
-      "symbol": "KO",
-      "type": "verdict",
-      "text": "KO NEUTRAL \u2192 WATCH-BUY",
-      "to": "WATCH-BUY"
-    },
-    {
-      "symbol": "AMD",
-      "type": "flag",
-      "text": "AMD new: big daily move"
-    },
-    {
-      "symbol": "INTC",
-      "type": "flag",
-      "text": "INTC new: big daily move"
-    },
-    {
       "symbol": "AMD",
       "type": "mover",
-      "text": "AMD +7.9% today"
+      "text": "AMD +8.0% today"
     },
     {
       "symbol": "DELL",
@@ -10995,7 +10973,7 @@
     {
       "symbol": "INTC",
       "type": "mover",
-      "text": "INTC +9.7% today"
+      "text": "INTC +9.3% today"
     },
     {
       "symbol": "NOW",
@@ -11005,13 +10983,13 @@
     {
       "symbol": "TSLA",
       "type": "mover",
-      "text": "TSLA +4.2% today"
+      "text": "TSLA +4.6% today"
     }
   ],
   "briefing": {
-    "generated_at": "2026-06-11T20:01:43.383564+00:00",
+    "generated_at": "2026-06-11T21:36:00.588474+00:00",
     "source": "deterministic",
-    "text": "Verdict changes today: AMZN NEUTRAL \u2192 WATCH-BUY; KO NEUTRAL \u2192 WATCH-BUY. Screening as possible buys: MU, SNDK, TSM, NVDA, DELL, ASML. Screening as ones to avoid or trim: NOW.",
+    "text": "5 update(s) since the last run. Screening as possible buys: MU, SNDK, TSM, NVDA, DELL, ASML. Screening as ones to avoid or trim: NOW.",
     "buy": [
       {
         "symbol": "MU",
