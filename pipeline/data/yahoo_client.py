@@ -36,8 +36,13 @@ class YahooError(RuntimeError):
     """Raised when Yahoo returns an error or no usable price data."""
 
 
-def _retry_wait(resp, backoff: float, cap: float = 60.0) -> float:
-    """Wait this long before retrying: Retry-After header if larger, capped."""
+def _retry_wait(resp, backoff: float, cap: float = 15.0) -> float:
+    """Wait this long before retrying: Retry-After header if larger, capped.
+
+    The cap is deliberately low — the bot-wall sends inflated Retry-After
+    values, and with ~19 symbols a per-request minute would add 20+ minutes
+    to the run. Symbols that stay walled fall through to FMP / stale cache.
+    """
     try:
         retry_after = float(resp.headers.get("Retry-After", ""))
     except (TypeError, ValueError):
@@ -52,13 +57,14 @@ def _range_for(days: int) -> str:
     return "10y"
 
 
-def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = None) -> dict:
+def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = None,
+              attempts: int = 3) -> dict:
     """Daily OHLCV as a Finnhub-shaped dict (oldest -> newest)."""
     session = session or requests.Session()
     params = {"range": _range_for(days), "interval": "1d"}
     backoff = 1.0
     last_exc: Exception | None = None
-    for attempt in range(3):
+    for attempt in range(attempts):
         # Rotate hosts between attempts — datacenter IPs (e.g. GitHub Actions
         # runners) sometimes get bot-walled on one edge but not the other.
         base = BASE_URLS[attempt % len(BASE_URLS)]
@@ -66,15 +72,17 @@ def get_ohlcv(symbol: str, days: int = 400, session: requests.Session | None = N
             resp = session.get(base + symbol, params=params, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
         except requests.RequestException as exc:
             last_exc = exc
-            time.sleep(backoff)
-            backoff *= 2
+            if attempt + 1 < attempts:
+                time.sleep(backoff)
+                backoff *= 2
             continue
         if resp.status_code in (401, 403, 429, 999) or resp.status_code >= 500:
             # 401/403/999 are Yahoo's bot-wall responses; worth retrying on the
             # other host rather than failing immediately.
             last_exc = YahooError(f"HTTP {resp.status_code}")
-            time.sleep(_retry_wait(resp, backoff))
-            backoff *= 2
+            if attempt + 1 < attempts:
+                time.sleep(_retry_wait(resp, backoff))
+                backoff *= 2
             continue
         if not resp.ok:
             raise YahooError(f"HTTP {resp.status_code}: {resp.text[:160]}")
@@ -93,13 +101,22 @@ def get_many(symbols: list[str], days: int = 400, workers: int = 2,
     If the parallel pass leaves failures, one slow serial pass retries them
     after `second_chance_wait` seconds — Yahoo's burst-429 usually clears
     within a minute, and a missed symbol here costs a day of dashboard gaps.
+
+    Both passes stop paying per-symbol retry waits once several symbols in a
+    row have failed: at that point the runner IP is walled and waiting only
+    stretches the job (FMP / stale cache pick up the slack downstream).
     """
+    wall = {"strikes": 0}   # consecutive failures; shared, races are benign
+
     def one(sym: str):
         if jitter:
             time.sleep(random.uniform(0, jitter))
         try:
-            return sym, get_ohlcv(sym, days=days)
+            result = get_ohlcv(sym, days=days, attempts=1 if wall["strikes"] >= 4 else 3)
+            wall["strikes"] = 0
+            return sym, result
         except YahooError as exc:
+            wall["strikes"] += 1
             return sym, {"error": str(exc)}
     if not symbols:
         return {}
@@ -108,12 +125,17 @@ def get_many(symbols: list[str], days: int = 400, workers: int = 2,
     failed = [sym for sym, v in out.items() if "error" in v]
     if failed and second_chance_wait > 0:
         time.sleep(second_chance_wait)
+        misses = 0
         for sym in failed:
             time.sleep(random.uniform(0.5, 1.5))  # serial + paced, no burst
             try:
-                out[sym] = get_ohlcv(sym, days=days)
+                out[sym] = get_ohlcv(sym, days=days, attempts=2)
+                misses = 0
             except YahooError as exc:
                 out[sym] = {"error": str(exc)}
+                misses += 1
+                if misses >= 3:
+                    break   # wall hasn't lifted — keep the recorded errors
     return out
 
 
