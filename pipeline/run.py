@@ -319,6 +319,10 @@ def run(cfg: dict | None = None, rate_limit_cooldown: float = 65.0) -> dict:
     slow_w = int(cfg.get("thresholds", {}).get("technicals", {}).get("sma_slow", 200))
     print(f"fetching prices for {len(watchlist)} tickers (parallel)…", flush=True)
     ohlcv_map = yahoo.get_many(watchlist, days=max(slow_w + 50, 400))
+    yahoo_ok = sum(1 for v in ohlcv_map.values() if "error" not in v)
+    print(f"yahoo prices: {yahoo_ok}/{len(watchlist)} ok"
+          + ("" if yahoo_ok == len(watchlist) else " (rest fall back to FMP / stale cache)"),
+          flush=True)
 
     def attempt(symbol: str) -> dict:
         try:

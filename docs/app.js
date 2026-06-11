@@ -120,7 +120,8 @@ function setUpdated(data) {
 
 // Tiny inline SVG price line (cards + fundamentals rows): gradient area fill
 // fading to transparent, line draws itself in (pathLength + dashoffset in CSS),
-// glowing dot on the latest point.
+// glowing dot on the latest point. Hovering anywhere over the svg shows the
+// nearest point's value (shared tooltip + cursor dot, wired up below).
 let sparkSeq = 0;
 function sparklineSvg(series, opts = {}) {
   if (!Array.isArray(series) || series.length < 2) return "";
@@ -133,7 +134,9 @@ function sparklineSvg(series, opts = {}) {
   const up = series[n - 1] >= series[0];
   const col = up ? "var(--up)" : "var(--down)";
   const gid = `sg${++sparkSeq}`;   // gradient ids must be unique per svg
-  return `<svg viewBox="0 0 ${W} ${H}" class="spark" preserveAspectRatio="none" aria-hidden="true">
+  const labels = Array.isArray(opts.labels) ? ` data-labels="${esc(opts.labels.join("|"))}"` : "";
+  return `<svg viewBox="0 0 ${W} ${H}" class="spark" preserveAspectRatio="none" aria-hidden="true"
+    data-vals="${series.map((v) => +(+v).toFixed(4)).join(",")}" data-pts="${pts}"${labels}${opts.money ? ` data-money="1"` : ""}>
     <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${col}" stop-opacity="0.28"/>
       <stop offset="1" stop-color="${col}" stop-opacity="0"/>
@@ -142,8 +145,52 @@ function sparklineSvg(series, opts = {}) {
     <polyline class="spark-line" points="${pts}" fill="none" stroke="${col}" stroke-width="1.6"
       stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
     <circle class="spark-dot" cx="${x(n - 1).toFixed(1)}" cy="${y(series[n - 1]).toFixed(1)}" r="2.2"
-      fill="${col}" style="filter:drop-shadow(0 0 3px ${col})"/></svg>`;
+      fill="${col}" style="filter:drop-shadow(0 0 3px ${col})"/>
+    <circle class="spark-cursor" r="2.4" fill="${col}"/></svg>`;
 }
+
+/* ---- sparkline hover: one shared tooltip, delegated so every spark works ---- */
+const sparkTip = document.createElement("div");
+sparkTip.className = "spark-tip";
+sparkTip.hidden = true;
+document.body.appendChild(sparkTip);
+let sparkTipSvg = null;
+
+function hideSparkTip() {
+  sparkTip.hidden = true;
+  if (sparkTipSvg) {
+    const c = sparkTipSvg.querySelector(".spark-cursor");
+    if (c) c.style.opacity = "0";
+    sparkTipSvg = null;
+  }
+}
+
+document.addEventListener("pointermove", (e) => {
+  const svg = e.target.closest ? e.target.closest("svg.spark") : null;
+  if (!svg || !svg.dataset.vals) { hideSparkTip(); return; }
+  if (sparkTipSvg && sparkTipSvg !== svg) hideSparkTip();
+  const vals = svg.dataset.vals.split(",").map(Number);
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width) return;
+  const i = Math.max(0, Math.min(vals.length - 1,
+    Math.round(((e.clientX - rect.left) / rect.width) * (vals.length - 1))));
+  const v = vals[i];
+  const labels = svg.dataset.labels ? svg.dataset.labels.split("|") : null;
+  const valTxt = svg.dataset.money ? fmtMoney(v)
+    : Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2);
+  sparkTip.textContent = labels && labels[i] ? `${labels[i]} · ${valTxt}` : valTxt;
+  // Snap the cursor dot to the hovered point (viewBox units, like the line).
+  const pt = svg.dataset.pts.split(" ")[i].split(",");
+  const cur = svg.querySelector(".spark-cursor");
+  if (cur) { cur.setAttribute("cx", pt[0]); cur.setAttribute("cy", pt[1]); cur.style.opacity = "1"; }
+  const px = rect.left + (i / (vals.length - 1)) * rect.width;
+  sparkTip.style.left = `${px}px`;
+  sparkTip.style.top = `${rect.top}px`;
+  sparkTip.hidden = false;
+  sparkTipSvg = svg;
+});
+document.addEventListener("scroll", hideSparkTip, true);
+document.addEventListener("pointerdown", hideSparkTip);
 
 // Verdict pill; Watch-Buy gets the animated pulse dot.
 function badgeHtml(verdict) {
@@ -357,7 +404,7 @@ function cardEl(t) {
     <div class="price-row">
       <span class="price tabular"${typeof t.price === "number" ? ` data-v="${t.price}"` : ""}>${fmtMoney(t.price)}</span>
       <span class="change ${changeCls} tabular">${fmtPct(t.change_pct)}</span>
-      ${sparklineSvg(t.spark)}
+      ${sparklineSvg(t.spark, { money: true })}
     </div>
     <div class="meta-row">
       <span class="composite-pill">Composite <strong>${fmtScore(t.composite)}</strong></span>
@@ -394,7 +441,8 @@ function openDrawer(symbol) {
     const tone = m.tone || "neutral";
     const word = m.word ? `<span class="word ${tone}">${esc(m.word)}</span>` : `<span class="word none">—</span>`;
     const h = history[m.key];
-    const spark = h && h.length > 1 ? sparklineSvg(h.map((p) => p[1]), { w: 60, h: 18 }) : "";
+    const spark = h && h.length > 1
+      ? sparklineSvg(h.map((p) => p[1]), { w: 60, h: 18, labels: h.map((p) => p[0]) }) : "";
     return `<tr><td>${esc(m.label)}</td><td class="mval tabular">${esc(m.display)}</td>
       <td class="mspark">${spark}</td><td>${word}</td></tr>`;
   }).join("");
@@ -448,16 +496,39 @@ function drawPriceChart(t) {
     beforeDatasetsDraw(c) { c.ctx.save(); c.ctx.shadowColor = col; c.ctx.shadowBlur = 14; },
     afterDatasetsDraw(c) { c.ctx.restore(); },
   };
+  // Dashed vertical line through the hovered point, so the index-mode tooltip
+  // reads as "price at this spot" anywhere over the chart.
+  const crosshair = {
+    id: "crosshair",
+    afterDatasetsDraw(c) {
+      const active = c.tooltip && c.tooltip.getActiveElements ? c.tooltip.getActiveElements() : [];
+      if (!active.length) return;
+      const g = c.ctx;
+      g.save();
+      g.strokeStyle = getCss("--border");
+      g.lineWidth = 1;
+      g.setLineDash([4, 4]);
+      g.beginPath();
+      g.moveTo(active[0].element.x, c.chartArea.top);
+      g.lineTo(active[0].element.x, c.chartArea.bottom);
+      g.stroke();
+      g.restore();
+    },
+  };
   drawerChart = new Chart(ctx, {
     type: "line",
-    plugins: [glow],
+    plugins: [glow, crosshair],
     data: {
       labels: t.spark.map((_, i) => i),
       datasets: [{ data: t.spark, borderColor: col, backgroundColor: grad, fill: true,
-                   borderWidth: 2, pointRadius: 0, tension: 0.25 }],
+                   borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
+                   pointHoverBackgroundColor: col, pointHoverBorderWidth: 0, tension: 0.25 }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      // Hovering anywhere over the chart snaps to the nearest column — no need
+      // to point at the line itself.
+      interaction: { mode: "index", intersect: false },
       plugins: { legend: { display: false }, tooltip: {
         callbacks: { title: () => "", label: (c) => "$" + c.parsed.y.toFixed(2) } } },
       scales: {

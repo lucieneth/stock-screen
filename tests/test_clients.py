@@ -74,7 +74,22 @@ class TestYahooParse:
         mk = lambda h: type("R", (), {"headers": h})()
         assert yahoo_client._retry_wait(mk({"Retry-After": "7"}), 1.0) == 7.0
         assert yahoo_client._retry_wait(mk({}), 2.0) == 2.0            # falls back to backoff
-        assert yahoo_client._retry_wait(mk({"Retry-After": "999"}), 1.0) == 60.0  # capped
+        assert yahoo_client._retry_wait(mk({"Retry-After": "999"}), 1.0) == 15.0  # capped
+
+    def test_get_many_stops_retrying_once_walled(self, monkeypatch):
+        # After 4 consecutive failures the remaining symbols get one attempt,
+        # not three — a walled IP shouldn't cost per-symbol retry waits.
+        seen = []
+
+        def fake_get(s, *, attempts=3, **k):
+            seen.append(attempts)
+            raise yahoo_client.YahooError("HTTP 429")
+
+        monkeypatch.setattr(yahoo_client, "get_ohlcv", fake_get)
+        monkeypatch.setattr(yahoo_client.time, "sleep", lambda s: None)
+        yahoo_client.get_many([f"S{i}" for i in range(8)], workers=1, jitter=0,
+                              second_chance_wait=0)
+        assert seen[:4] == [3, 3, 3, 3] and set(seen[4:]) == {1}
 
 
 class TestPeerBenchmarks:
