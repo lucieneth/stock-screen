@@ -11,7 +11,7 @@
     Bump ?v= when app.js/styles.css change so browsers skip the cached file.
   -->
   <link rel="preload" href="vendor/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=12" />
+  <link rel="stylesheet" href="styles.css?v=13" />
 </head>
 <body>
   <div class="bg" aria-hidden="true"><div class="blob"></div></div>
@@ -55,6 +55,7 @@
         <option value="symbol-asc">Ticker A–Z</option>
         <option value="change-desc">Day move ↓</option>
         <option value="change-asc">Day move ↑</option>
+        <option value="issues-first">Data issues first</option>
       </select>
     </label>
     <div class="manage">
@@ -64,17 +65,36 @@
     </div>
   </div>
 
+  <p id="gaps-note" class="gaps-note" hidden></p>
   <p id="status" class="status">Loading…</p>
   <main id="cards" class="cards"></main>
 
   <div id="scrim" class="scrim" hidden></div>
   <aside id="detail" class="drawer" hidden aria-label="Stock detail"></aside>
 
+  <button id="chat-fab" class="chat-fab" aria-label="Ask the screener" title="Ask the screener">
+    <span class="chat-fab-icon">✦</span></button>
+  <section id="chat" class="chat" hidden aria-label="Screener assistant">
+    <div class="chat-head">
+      <div><strong>Screener Assistant</strong><span class="chat-sub">answers from today's data</span></div>
+      <div class="chat-head-btns">
+        <button id="chat-key" class="chat-mini" title="Add your own AI key for free-form chat">⚙</button>
+        <button id="chat-close" class="chat-mini" aria-label="Close">✕</button>
+      </div>
+    </div>
+    <div id="chat-log" class="chat-log"></div>
+    <div id="chat-suggest" class="chat-suggest"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" autocomplete="off" placeholder="Ask: what's the best stock to buy?" aria-label="Ask a question" />
+      <button class="chat-send" aria-label="Send">↑</button>
+    </form>
+  </section>
+
   <footer>
     <p>Refreshed on a schedule by GitHub Actions · data: Finnhub / Yahoo (computed locally). Verdicts are a filter to investigate, not buy/sell instructions.</p>
   </footer>
 
   <script src="vendor/chart.umd.min.js"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
