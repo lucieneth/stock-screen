@@ -1,10 +1,14 @@
 name: Refresh screener data
 
+
 on:
   schedule:
-    # 21:00 UTC, Mon–Fri (after the US market close; cron is always UTC).
-    - cron: "0 21 * * 1-5"
-  workflow_dispatch: {}   # allow manual "Run workflow"
+    # Every 2 hours during US market hours (9:30 AM–4:00 PM ET = 13:30–20:00 UTC), Mon–Fri
+    - cron: "30 13 * * 1-5"  # 9:30 AM ET  — market open
+    - cron: "30 15 * * 1-5"  # 11:30 AM ET
+    - cron: "30 17 * * 1-5"  # 1:30 PM ET
+    - cron: "30 19 * * 1-5"  # 3:30 PM ET  — ~30 min before close
+  workflow_dispatch: {}       # allow manual "Run workflow"
 
 # Needed so the job can commit the regenerated JSON back to the repo.
 permissions:
