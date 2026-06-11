@@ -25,6 +25,8 @@ async function load() {
     state.tickers = Array.isArray(data.tickers) ? data.tickers : [];
     setUpdated(data);
     renderTape();
+    state.briefing = data.briefing || null;
+    state.changes = Array.isArray(data.changes) ? data.changes : [];
     renderBrief(data.briefing);
     renderChanges(data.changes);
     status.style.display = "none";
@@ -243,15 +245,35 @@ function apply() {
     return true;
   });
   const n = (v) => (typeof v === "number" ? v : -Infinity);
+  const gaps = (t) => (t.error ? 2 : (t.missing && t.missing.length ? 1 : 0));
   const cmp = {
     "composite-desc": (a, b) => n(b.composite) - n(a.composite),
     "composite-asc": (a, b) => n(a.composite) - n(b.composite),
     "symbol-asc": (a, b) => (a.symbol || "").localeCompare(b.symbol || ""),
     "change-desc": (a, b) => n(b.change_pct) - n(a.change_pct),
     "change-asc": (a, b) => n(a.change_pct) - n(b.change_pct),
+    // Tickers missing data (or errored) bubble to the front so gaps are obvious.
+    "issues-first": (a, b) => gaps(b) - gaps(a) || (a.symbol || "").localeCompare(b.symbol || ""),
   }[state.sort];
   rows.sort(cmp);
   renderCards(rows);
+  renderGapsNote();
+}
+
+// Flag how many tickers are missing data; one click brings them to the front.
+function renderGapsNote() {
+  const el = document.getElementById("gaps-note");
+  const bad = state.tickers.filter((t) => t.error || (t.missing && t.missing.length));
+  if (!bad.length || state.sort === "issues-first") { el.hidden = true; return; }
+  el.innerHTML = `⚠ ${bad.length} ticker${bad.length > 1 ? "s" : ""} missing some data ` +
+    `(${bad.slice(0, 4).map((t) => esc(t.symbol)).join(", ")}${bad.length > 4 ? "…" : ""}). ` +
+    `<button id="gaps-sort" class="linkish">Show these first →</button>`;
+  el.hidden = false;
+  document.getElementById("gaps-sort").addEventListener("click", () => {
+    state.sort = "issues-first";
+    document.getElementById("sort").value = "issues-first";
+    apply();
+  });
 }
 
 function renderCards(rows) {
@@ -489,5 +511,175 @@ document.getElementById("brief").addEventListener("click", (e) => {
 document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
 
+/* ===================== Screener Assistant (chat) ===================== */
+// Answers from the data already loaded (no key needed). If you paste your own
+// free Gemini/Groq key (stored only in localStorage), open-ended questions go
+// to the LLM with the screener data as context.
+
+const SUGGESTIONS = ["What's the best stock to buy?", "What should I avoid?", "What changed today?", "Biggest movers?"];
+
+function liveT() { return state.tickers.filter((t) => !t.error); }
+function topBuys(n) { return liveT().filter((t) => t.verdict === "WATCH-BUY").sort((a, b) => (b.composite || 0) - (a.composite || 0)).slice(0, n); }
+function topSells(n) { return liveT().filter((t) => t.verdict === "WATCH-SELL").sort((a, b) => (a.composite || 0) - (b.composite || 0)).slice(0, n); }
+function tChip(t) { return `<button class="t-link" data-sym="${esc(t.symbol)}">${esc(t.symbol)}</button>`; }
+function findT(q) {
+  const up = q.toUpperCase();
+  return liveT().find((t) => new RegExp(`\\b${t.symbol}\\b`).test(up))
+      || liveT().find((t) => (t.company || "").toUpperCase().split(/[\s,]+/).some((w) => w.length > 2 && up.includes(w.toUpperCase())));
+}
+function gist(t) {
+  if (t.ai && t.ai.takeaway) return esc(t.ai.takeaway);
+  const good = (t.fundamentals || []).filter((m) => m.tone === "good").map((m) => m.label);
+  return good.length ? `strong on ${esc(good.slice(0, 3).join(", "))}` : "a balanced profile";
+}
+function describe(t) {
+  const s = t.scores || {};
+  return `${tChip(t)} — <b>${esc(t.verdict || "—")}</b> at ${fmtMoney(t.price)} (${fmtPct(t.change_pct)}).<br>` +
+    `${t.ai && t.ai.takeaway ? esc(t.ai.takeaway) + "<br>" : ""}` +
+    `<span class="muted">Fundamentals ${fmtScore(s.fundamentals)} · Technicals ${fmtScore(s.technicals)} · Sentiment ${fmtScore(s.sentiment)}</span>`;
+}
+
+function answerLocally(q) {
+  const s = q.toLowerCase().trim();
+  const T = findT(q);
+
+  if (/(best|top|which|what).*(buy|pick)|buy now|to buy|should i buy/.test(s) || s === "buy") {
+    const b = topBuys(3);
+    if (!b.length) return "Nothing is screening as a <b>WATCH-BUY</b> right now — mostly neutral.";
+    const top = b[0];
+    const rest = b.slice(1);
+    return `The strongest buy-screen right now is ${tChip(top)} (composite <b>${fmtScore(top.composite)}</b>).<br>` +
+      `Why: ${gist(top)}.` + (rest.length ? `<br>Also screening as buys: ${rest.map(tChip).join(" ")}` : "") +
+      `<br><span class="muted">A filter to investigate — not advice.</span>`;
+  }
+  if (/(avoid|sell|trim|worst|stay away|not buy)/.test(s)) {
+    const v = topSells(3);
+    if (!v.length) return "Nothing is screening as a <b>WATCH-SELL</b> right now.";
+    return `Screening as ones to avoid/trim: ${v.map(tChip).join(" ")}.<br>` +
+      `Weakest is ${tChip(v[0])} — ${gist(v[0])} is the concern.`;
+  }
+  if (/(chang|flip|new|today)/.test(s)) {
+    if (state.briefing && state.briefing.text) return esc(state.briefing.text);
+    if (state.changes && state.changes.length) return state.changes.slice(0, 6).map((c) => "• " + esc(c.text)).join("<br>");
+    return "No notable changes since the last run.";
+  }
+  if (/(mover|moved|biggest|gainer|loser|up today|down today)/.test(s)) {
+    const m = liveT().filter((t) => typeof t.change_pct === "number").sort((a, b) => Math.abs(b.change_pct) - Math.abs(a.change_pct)).slice(0, 4);
+    return m.length ? "Biggest moves today:<br>" + m.map((t) => `${tChip(t)} ${fmtPct(t.change_pct)}`).join("<br>") : "No price moves to report.";
+  }
+  if (/(cheap|value|low p\/?e|undervalued)/.test(s)) {
+    const withPe = liveT().map((t) => ({ t, pe: (t.fundamentals || []).find((m) => m.key === "pe")?.value })).filter((x) => typeof x.pe === "number");
+    withPe.sort((a, b) => a.pe - b.pe);
+    return withPe.length ? "Lowest P/E (cheapest by earnings):<br>" + withPe.slice(0, 4).map((x) => `${tChip(x.t)} ${x.pe.toFixed(1)}×`).join("<br>") : "No P/E data available.";
+  }
+  if (/how many|count|breakdown/.test(s)) {
+    const c = { "WATCH-BUY": 0, NEUTRAL: 0, "WATCH-SELL": 0 };
+    liveT().forEach((t) => { if (c[t.verdict] != null) c[t.verdict]++; });
+    return `Of ${liveT().length} screened: <b>${c["WATCH-BUY"]}</b> buy, ${c.NEUTRAL} neutral, <b>${c["WATCH-SELL"]}</b> sell.`;
+  }
+  if (T && /(why|about|tell me|how|is|should|good|bad|\?)/.test(s)) return describe(T);
+  if (T) return describe(T);
+  return null; // no local match
+}
+
+function buildLLMContext() {
+  const lines = liveT().slice(0, 30).map((t) => {
+    const s = t.scores || {};
+    const fl = (t.fundamentals || []).filter((m) => m.word).map((m) => `${m.label} ${m.word}`).slice(0, 4).join(", ");
+    return `${t.symbol} (${t.company || ""}, ${t.sector || ""}): ${t.verdict} composite ${fmtScore(t.composite)}; ` +
+      `F ${fmtScore(s.fundamentals)} T ${fmtScore(s.technicals)} S ${fmtScore(s.sentiment)}; price ${fmtMoney(t.price)} ${fmtPct(t.change_pct)}; ` +
+      `${fl}${t.ai && t.ai.takeaway ? "; " + t.ai.takeaway : ""}`;
+  });
+  return lines.join("\n");
+}
+
+async function answerLLM(q) {
+  const raw = localStorage.getItem("ai_key");
+  if (!raw) return null;
+  const idx = raw.indexOf(":");
+  const prov = raw.slice(0, idx), key = raw.slice(idx + 1);
+  const prompt = `You are a stock-screener assistant. Answer the user's question using ONLY the data below. ` +
+    `Be concise and plain-spoken. This is decision-support, not financial advice.\n\nDATA:\n${buildLLMContext()}\n\nQUESTION: ${q}`;
+  try {
+    if (prov === "gemini") {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      return esc(j.candidates?.[0]?.content?.parts?.[0]?.text || "").replace(/\n/g, "<br>");
+    }
+    const r = await fetch("https://api.groq.com/openai/v1/chat/completions",
+      { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + key }, body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] }) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    return esc(j.choices?.[0]?.message?.content || "").replace(/\n/g, "<br>");
+  } catch (e) {
+    return `Couldn't reach the AI (${esc(e.message)}). Check your key via ⚙.`;
+  }
+}
+
+function chatPush(role, html) {
+  const log = document.getElementById("chat-log");
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+async function chatAsk(q) {
+  q = q.trim();
+  if (!q) return;
+  chatPush("user", esc(q));
+  const local = answerLocally(q);
+  if (local) { chatPush("bot", local); return; }
+  if (localStorage.getItem("ai_key")) {
+    const thinking = chatPush("bot", '<span class="dots">thinking…</span>');
+    thinking.innerHTML = (await answerLLM(q)) || "I couldn't answer that from the data.";
+    document.getElementById("chat-log").scrollTop = 1e9;
+  } else {
+    chatPush("bot", `I can answer that with an AI key. Try: <i>${esc(SUGGESTIONS[0])}</i>, or click ⚙ to add a free Gemini/Groq key for open-ended questions.`);
+  }
+}
+
+function chatInit() {
+  const fab = document.getElementById("chat-fab");
+  const panel = document.getElementById("chat");
+  const sug = document.getElementById("chat-suggest");
+  sug.innerHTML = SUGGESTIONS.map((q) => `<button class="sug" data-q="${esc(q)}">${esc(q)}</button>`).join("");
+  let greeted = false;
+  fab.addEventListener("click", () => {
+    const open = panel.hidden;
+    panel.hidden = !open;
+    fab.classList.toggle("active", open);
+    if (open && !greeted) {
+      greeted = true;
+      chatPush("bot", "Hi! Ask me about today's screen — e.g. <i>what's the best stock to buy?</i> I answer from the loaded data.");
+    }
+    if (open) document.getElementById("chat-input").focus();
+  });
+  document.getElementById("chat-close").addEventListener("click", () => { panel.hidden = true; fab.classList.remove("active"); });
+  document.getElementById("chat-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const inp = document.getElementById("chat-input");
+    chatAsk(inp.value); inp.value = "";
+  });
+  sug.addEventListener("click", (e) => { const b = e.target.closest(".sug"); if (b) chatAsk(b.dataset.q); });
+  document.getElementById("chat-log").addEventListener("click", (e) => {
+    const b = e.target.closest(".t-link"); if (b) openDrawer(b.dataset.sym);
+  });
+  document.getElementById("chat-key").addEventListener("click", () => {
+    const cur = localStorage.getItem("ai_key") ? " (a key is set)" : "";
+    const v = prompt(`Paste your own free API key for open-ended chat${cur}.\nFormat:  gemini:YOUR_KEY   or   groq:YOUR_KEY\n(stored only in this browser; leave blank to clear)`);
+    if (v === null) return;
+    if (!v.trim()) { localStorage.removeItem("ai_key"); chatPush("bot", "AI key cleared — I'll keep answering from the data."); return; }
+    if (!/^(gemini|groq):.+/i.test(v.trim())) { chatPush("bot", "That didn't look right — use <code>gemini:KEY</code> or <code>groq:KEY</code>."); return; }
+    localStorage.setItem("ai_key", v.trim().toLowerCase().startsWith("groq") ? "groq:" + v.trim().slice(5) : "gemini:" + v.trim().slice(7));
+    chatPush("bot", "Key saved (in this browser only). Now you can ask open-ended questions too.");
+  });
+}
+
 initTheme();
+chatInit();
 load();
